@@ -5,258 +5,300 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Wedding AR – Standalone</title>
 
+  <!-- A-Frame + MindAR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    html, body { margin:0; width:100%; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial; }
-    body { background: linear-gradient(#ffd6e3, #f7b2c7); }
-
-    .overlay {
-      position: fixed; inset: 0;
-      display:flex; align-items:center; justify-content:center;
-      z-index: 20;
-      padding: 18px;
-      background: radial-gradient(circle at 50% 25%, rgba(255,255,255,.35), rgba(255,255,255,0) 55%),
-                  linear-gradient(#ffd6e3, #f7b2c7);
+    :root{
+      --pink1:#ffe3ea;
+      --pink2:#ffc7d4;
+      --pink3:#ff7aa6;
+      --text:#2a1b22;
+      --glass: rgba(255,255,255,.86);
+      --shadow: 0 18px 45px rgba(0,0,0,.22);
+      --radius: 20px;
     }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, var(--pink1), var(--pink2));
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Overlay start */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: radial-gradient(circle at 40% 10%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
+                  linear-gradient(180deg, var(--pink1), var(--pink2));
+      z-index: 50;
+    }
+
     .card {
       width: min(520px, 100%);
-      background: rgba(255,255,255,.88);
-      border: 1px solid rgba(255,255,255,.6);
-      border-radius: 22px;
-      padding: 18px;
-      text-align:center;
-      box-shadow: 0 18px 50px rgba(0,0,0,.18);
-      backdrop-filter: blur(10px);
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 20px 18px;
+      text-align: center;
+      color: var(--text);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
-    .title { margin: 2px 0 6px; font-size: 20px; font-weight: 800; color:#2b1220; }
-    .sub { margin: 0 0 12px; font-size: 14px; color: rgba(43,18,32,.75); line-height: 1.4; }
 
-    .row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .card h2{
+      margin: 0 0 8px;
+      font-size: 20px;
+      letter-spacing: .2px;
+    }
+    .card p{
+      margin: 0 0 14px;
+      font-size: 14px;
+      opacity: .85;
+      line-height: 1.35;
+    }
+
     .btn {
-      border: none; border-radius: 999px;
-      padding: 12px 18px;
+      width: min(260px, 92vw);
+      border: none;
+      border-radius: 999px;
+      padding: 14px 18px;
       font-weight: 800;
       cursor: pointer;
-      background: rgba(255,255,255,.95);
-      color: #2b1220;
-      box-shadow: 0 10px 24px rgba(0,0,0,.12);
+      background: white;
+      color: #1c0f15;
+      box-shadow: 0 10px 25px rgba(0,0,0,.12);
     }
-    .btn.primary { background: #ff4d88; color: white; }
-    .pill {
-      position: fixed; top: 10px; left: 10px; right: 10px;
-      display:flex; justify-content:space-between; gap:10px;
-      z-index: 30;
-      pointer-events:none;
-    }
-    .badge {
-      pointer-events:auto;
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 10px 12px;
+    .btn:active{ transform: translateY(1px); }
+
+    /* Floating audio button (always above AR) */
+    #audioBtn {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      width: min(240px, 92vw);
+      padding: 14px 18px;
       border-radius: 999px;
-      background: rgba(255,255,255,.55);
-      border: 1px solid rgba(255,255,255,.8);
-      color: rgba(43,18,32,.85);
-      font-size: 13px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+      border: none;
+      font-weight: 900;
+      cursor: pointer;
+      background: var(--pink3);
+      color: white;
+      box-shadow: 0 16px 40px rgba(0,0,0,.20);
+      z-index: 9999;
+      display: none;          /* mostrato solo quando serve */
+      opacity: 1;
+      pointer-events: auto;
     }
-    .badge strong { font-weight: 900; }
-    .hidden { display:none !important; }
+
+    /* Small status pill */
+    #status {
+      position: fixed;
+      top: calc(12px + env(safe-area-inset-top));
+      left: 12px;
+      right: 12px;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+    #status span{
+      pointer-events: auto;
+      background: rgba(255,255,255,.70);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 13px;
+      box-shadow: 0 12px 26px rgba(0,0,0,.12);
+      color: #2a1b22;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
   </style>
 </head>
 
 <body>
 
-<div class="pill">
-  <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
-  <div class="badge hidden" id="page">Pagina: —</div>
-</div>
+  <!-- Status -->
+  <div id="status"><span id="statusText">Pronto ✨</span></div>
 
-<div class="overlay" id="ui">
-  <div class="card">
-    <div class="title">Wedding AR Experience</div>
-    <div class="sub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra la pagina AR.</div>
-    <div class="row">
-      <button class="btn primary" id="startBtn">Avvia esperienza</button>
-      <button class="btn" id="helpBtn">Come funziona</button>
-    </div>
-    <div class="sub" style="margin-top:10px;font-size:12.5px;">
-      Consiglio: luce buona + pagina ferma 1–2 sec.
+  <!-- Start overlay -->
+  <div class="overlay" id="ui">
+    <div class="card">
+      <h2>Wedding AR Experience</h2>
+      <p>
+        Tocca <b>Avvia esperienza</b>, consenti la fotocamera<br>
+        e inquadra una pagina AR della rivista 💗
+      </p>
+      <button class="btn" id="startBtn">Avvia esperienza</button>
     </div>
   </div>
-</div>
 
-<a-scene
-  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
-  embedded
-  vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false">
+  <!-- Floating audio button -->
+  <button id="audioBtn">Attiva audio</button>
 
-  <a-assets>
-    <!-- Nota: crossorigin aiuta su molte combinazioni browser/CDN -->
-    <video id="v1" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_cbfeceaf5a244d839a6d4fdefa666bda/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
+  <!-- AR Scene -->
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+    embedded
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    renderer="colorManagement: true, physicallyCorrectLights: true"
+  >
+    <a-assets>
+      <!-- Nota: su Android l'audio parte SOLO dopo tap -> qui li lasciamo muted.
+           Poi li sblocchiamo col bottone. -->
+      <video id="v1"
+        src="https://video.wixstatic.com/video/047e10_cbfeceaf5a244d839a6d4fdefa666bda/1080p/mp4/file.mp4"
+        preload="auto" playsinline webkit-playsinline muted></video>
 
-    <video id="v2" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_5741e3a04b2f45c1ab8efe8450641163/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
+      <video id="v2"
+        src="https://video.wixstatic.com/video/047e10_5741e3a04b2f45c1ab8efe8450641163/1080p/mp4/file.mp4"
+        preload="auto" playsinline webkit-playsinline muted></video>
 
-    <video id="v3" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_68bb22b5292a4047a7ec9bedea327b65/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
-  </a-assets>
+      <video id="v3"
+        src="https://video.wixstatic.com/video/047e10_68bb22b5292a4047a7ec9bedea327b65/1080p/mp4/file.mp4"
+        preload="auto" playsinline webkit-playsinline muted></video>
+    </a-assets>
 
-  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-plane width="1" height="1" material="shader: flat; src: #v1"></a-plane>
-  </a-entity>
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-plane width="1" height="1" material="shader: flat; src: #v1"></a-plane>
+    </a-entity>
 
-  <a-entity mindar-image-target="targetIndex: 1">
-    <a-plane width="1" height="1" material="shader: flat; src: #v2"></a-plane>
-  </a-entity>
+    <a-entity mindar-image-target="targetIndex: 1">
+      <a-plane width="1" height="1" material="shader: flat; src: #v2"></a-plane>
+    </a-entity>
 
-  <a-entity mindar-image-target="targetIndex: 2">
-    <a-plane width="1" height="1" material="shader: flat; src: #v3"></a-plane>
-  </a-entity>
+    <a-entity mindar-image-target="targetIndex: 2">
+      <a-plane width="1" height="1" material="shader: flat; src: #v3"></a-plane>
+    </a-entity>
+  </a-scene>
 
-</a-scene>
+  <script>
+    const ui = document.getElementById("ui");
+    const startBtn = document.getElementById("startBtn");
+    const audioBtn = document.getElementById("audioBtn");
+    const statusText = document.getElementById("statusText");
 
-<script>
-  const ui = document.getElementById("ui");
-  const startBtn = document.getElementById("startBtn");
-  const helpBtn = document.getElementById("helpBtn");
-  const status = document.getElementById("status");
-  const page = document.getElementById("page");
+    const sceneEl = document.querySelector("a-scene");
 
-  const scene = document.querySelector("a-scene");
-  const vids = [
-    { el: document.getElementById("v1"), name: "La nostra storia" },
-    { el: document.getElementById("v2"), name: "Curiosità & momenti" },
-    { el: document.getElementById("v3"), name: "Grazie" }
-  ];
+    const vids = [
+      document.getElementById("v1"),
+      document.getElementById("v2"),
+      document.getElementById("v3"),
+    ];
 
-  let activeIdx = null;
+    let activeIndex = null;
 
-  function setStatus(text){ status.textContent = "AR " + text; }
-  function showPage(name){
-    page.classList.remove("hidden");
-    page.textContent = "Pagina: " + name;
-  }
-  function hidePage(){ page.classList.add("hidden"); page.textContent = "Pagina: —"; }
+    function pauseAll(reset=false){
+      vids.forEach(v => {
+        try { v.pause(); } catch(e){}
+        if(reset){
+          try { v.currentTime = 0; } catch(e){}
+        }
+      });
+    }
 
-  function stopAll(){
-    vids.forEach(v => {
-      try { v.el.pause(); v.el.currentTime = 0; } catch(e){}
-    });
-  }
-
-  async function unlockVideos() {
-    // Sblocca la riproduzione come "gesture" (tasto Avvia)
-    for (const v of vids) {
+    async function safePlay(i){
+      const v = vids[i];
       try {
-        v.el.muted = true;
-        v.el.playsInline = true;
-        v.el.setAttribute("playsinline", "");
-        v.el.setAttribute("webkit-playsinline", "");
-        await v.el.play();
-        v.el.pause();
-        v.el.currentTime = 0;
-      } catch(e) {
-        // anche se uno fallisce, continuiamo
-      }
-    }
-  }
-
-  // Pulsante audio: lo mostriamo durante il tracking
-  const audioBtn = document.createElement("button");
-  audioBtn.className = "btn";
-  audioBtn.textContent = "Attiva audio";
-  audioBtn.style.position = "fixed";
-  audioBtn.style.bottom = "14px";
-  audioBtn.style.left = "50%";
-  audioBtn.style.transform = "translateX(-50%)";
-  audioBtn.style.zIndex = "40";
-  audioBtn.style.display = "none";
-  document.body.appendChild(audioBtn);
-
-  audioBtn.addEventListener("click", async () => {
-    if (activeIdx === null) return;
-    const v = vids[activeIdx].el;
-    try {
-      v.muted = false;
-      await v.play();
-      audioBtn.textContent = "Audio attivo";
-      setTimeout(() => audioBtn.style.display = "none", 800);
-    } catch(e){
-      // Se blocca, resta muted
-      v.muted = true;
-      audioBtn.textContent = "Audio non disponibile";
-      setTimeout(() => audioBtn.style.display = "none", 1200);
-    }
-  });
-
-  helpBtn.addEventListener("click", () => {
-    alert(
-      "1) Tocca 'Avvia esperienza'\n" +
-      "2) Consenti la fotocamera\n" +
-      "3) Inquadra una pagina AR della rivista\n\n" +
-      "Se il video non parte subito: più luce e tieni la pagina ferma 1–2 secondi."
-    );
-  });
-
-  startBtn.addEventListener("click", async () => {
-    setStatus("Avvio fotocamera…");
-    try {
-      // Carica + sblocca i video con gesto utente
-      vids.forEach(v => { try { v.el.load(); } catch(e){} });
-      await unlockVideos();
-
-      await scene.systems["mindar-image-system"].start();
-      ui.style.display = "none";
-      setStatus("Inquadra una pagina ✨");
-    } catch(e){
-      setStatus("Errore fotocamera");
-      alert("Non riesco ad avviare la fotocamera. Controlla permessi del browser e riprova.");
-    }
-  });
-
-  // Events: play MUTED sempre (così non viene bloccato su Android)
-  document.querySelectorAll("[mindar-image-target]").forEach((el, i) => {
-    el.addEventListener("targetFound", async () => {
-      activeIdx = i;
-      showPage(vids[i].name);
-      setStatus("Contenuto attivo ✨");
-      stopAll();
-
-      const v = vids[i].el;
-      try {
-        v.muted = true;               // fondamentale per autoplay su Android
         await v.play();
-        audioBtn.textContent = "Attiva audio";
-        audioBtn.style.display = "inline-block"; // se vuoi audio, tap qui (gesture)
-      } catch(e){
-        // Se non parte nemmeno muted, di solito è encoding non compatibile
-        setStatus("Video non avviato");
+      } catch(e) {
+        // se fallisce, rimane fermo: l'utente potrà sbloccarlo con tap audio
+      }
+    }
+
+    function showAudioButton(){
+      audioBtn.textContent = "Attiva audio";
+      audioBtn.style.display = "inline-block";
+      audioBtn.style.opacity = "1";
+      audioBtn.style.pointerEvents = "auto";
+    }
+
+    function hideAudioButton(){
+      audioBtn.style.display = "none";
+    }
+
+    // START AR (gesture utente -> camera permission)
+    startBtn.addEventListener("click", async () => {
+      statusText.textContent = "Avvio fotocamera…";
+      // pre-warm
+      try { vids.forEach(v => v.load()); } catch(e){}
+
+      try {
+        await sceneEl.systems["mindar-image-system"].start();
+        ui.style.display = "none";
+        statusText.textContent = "Inquadra una pagina AR";
+      } catch(e) {
+        statusText.textContent = "Errore fotocamera";
+        alert("Non riesco ad avviare la fotocamera. Controlla i permessi e riprova.");
       }
     });
 
-    el.addEventListener("targetLost", () => {
-      if (activeIdx === i) {
-        activeIdx = null;
-        hidePage();
-        setStatus("Inquadra una pagina ✨");
-        audioBtn.style.display = "none";
-        stopAll();
+    // Target events
+    document.querySelectorAll("[mindar-image-target]").forEach((el, i) => {
+      el.addEventListener("targetFound", async () => {
+        activeIndex = i;
+
+        // Avvio video in modalità safe (muted su Android)
+        pauseAll(true);
+        vids[i].muted = true; // importantissimo per autoplay
+        statusText.textContent = "Pagina riconosciuta ✨";
+        showAudioButton();    // su Android serve sempre
+
+        await safePlay(i);
+      });
+
+      el.addEventListener("targetLost", () => {
+        if(activeIndex === i){
+          activeIndex = null;
+          statusText.textContent = "Inquadra una pagina AR";
+          hideAudioButton();
+          pauseAll(false);
+        }
+      });
+    });
+
+    // AUDIO UNLOCK (gesture utente)
+    audioBtn.addEventListener("click", async () => {
+      if(activeIndex === null) return;
+
+      const v = vids[activeIndex];
+
+      // sblocca audio + riparti
+      try {
+        v.muted = false;
+        await v.play();
+        audioBtn.textContent = "Audio attivo ✅";
+        statusText.textContent = "Audio attivo";
+      } catch(e) {
+        // fallback: prova a ripartire da zero
+        try {
+          v.muted = false;
+          v.currentTime = 0;
+          await v.play();
+          audioBtn.textContent = "Audio attivo ✅";
+          statusText.textContent = "Audio attivo";
+        } catch(e2) {
+          alert("Audio bloccato: riprova toccando ancora 'Attiva audio'.");
+        }
       }
     });
-  });
 
-  setStatus("Pronto ✨");
-</script>
-
+    // Init
+    statusText.textContent = "Pronto ✨";
+  </script>
 </body>
 </html>
