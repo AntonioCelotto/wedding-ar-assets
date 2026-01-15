@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wedding AR – Test Standalone</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #f6c1cc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
+      overflow: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(#f9dde3, #f6c1cc);
+      z-index: 10;
+    }
+
+    .card {
+      background: rgba(255,255,255,.9);
+      padding: 22px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    }
+
+    button {
+      margin-top: 12px;
+      padding: 14px 22px;
+      border-radius: 999px;
+      border: none;
+      background: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="overlay" id="ui">
+  <div class="card">
+    <h2>Wedding AR Experience</h2>
+    <p>Consenti l’uso della fotocamera<br>e inquadra la rivista ✨</p>
+    <button id="startBtn">Avvia esperienza</button>
+  </div>
+</div>
+
+<a-scene
+  mindar-image="imageTargetSrc: targets.mind; autoStart: false;"
+  embedded
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+
+  <a-assets>
+    <video id="v1" src="https://video.wixstatic.com/video/047e10_cbfeceaf5a244d839a6d4fdefa666bda/1080p/mp4/file.mp4" playsinline muted></video>
+    <video id="v2" src="https://video.wixstatic.com/video/047e10_5741e3a04b2f45c1ab8efe8450641163/1080p/mp4/file.mp4" playsinline muted></video>
+    <video id="v3" src="https://video.wixstatic.com/video/047e10_68bb22b5292a4047a7ec9bedea327b65/1080p/mp4/file.mp4" playsinline muted></video>
+  </a-assets>
+
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+  <a-entity mindar-image-target="targetIndex: 0">
+    <a-plane width="1" height="1" material="shader: flat; src: #v1"></a-plane>
+  </a-entity>
+
+  <a-entity mindar-image-target="targetIndex: 1">
+    <a-plane width="1" height="1" material="shader: flat; src: #v2"></a-plane>
+  </a-entity>
+
+  <a-entity mindar-image-target="targetIndex: 2">
+    <a-plane width="1" height="1" material="shader: flat; src: #v3"></a-plane>
+  </a-entity>
+
+</a-scene>
+
+<script>
+  const btn = document.getElementById("startBtn");
+  const ui = document.getElementById("ui");
+  const scene = document.querySelector("a-scene");
+  const vids = [
+    document.getElementById("v1"),
+    document.getElementById("v2"),
+    document.getElementById("v3")
+  ];
+
+  btn.onclick = async () => {
+    try {
+      vids.forEach(v => { v.muted = true; v.load(); });
+      await scene.systems["mindar-image-system"].start();
+      ui.style.display = "none";
+    } catch (e) {
+      alert("Errore fotocamera");
+    }
+  };
+
+  document.querySelectorAll("[mindar-image-target]").forEach((el, i) => {
+    el.addEventListener("targetFound", async () => {
+      vids.forEach(v => { v.pause(); v.currentTime = 0; });
+      try {
+        vids[i].muted = false;
+        await vids[i].play();
+      } catch {
+        vids[i].muted = true;
+        vids[i].play();
+      }
+    });
+
+    el.addEventListener("targetLost", () => {
+      vids.forEach(v => v.pause());
+    });
+  });
+</script>
+
+</body>
+</html>
