@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Wedding AR – Standalone</title>
+  <title>NDA Experience – AR</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -21,7 +21,7 @@
                   linear-gradient(#ffd6e3, #f7b2c7);
     }
     .card {
-      width: min(520px, 100%);
+      width: min(560px, 100%);
       background: rgba(255,255,255,.88);
       border: 1px solid rgba(255,255,255,.6);
       border-radius: 22px;
@@ -30,20 +30,21 @@
       box-shadow: 0 18px 50px rgba(0,0,0,.18);
       backdrop-filter: blur(10px);
     }
-    .title { margin: 2px 0 6px; font-size: 20px; font-weight: 800; color:#2b1220; }
+    .title { margin: 2px 0 6px; font-size: 20px; font-weight: 900; color:#2b1220; }
     .sub { margin: 0 0 12px; font-size: 14px; color: rgba(43,18,32,.75); line-height: 1.4; }
 
     .row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
     .btn {
       border: none; border-radius: 999px;
       padding: 12px 18px;
-      font-weight: 800;
+      font-weight: 900;
       cursor: pointer;
       background: rgba(255,255,255,.95);
       color: #2b1220;
       box-shadow: 0 10px 24px rgba(0,0,0,.12);
     }
     .btn.primary { background: #ff4d88; color: white; }
+
     .pill {
       position: fixed; top: 10px; left: 10px; right: 10px;
       display:flex; justify-content:space-between; gap:10px;
@@ -76,53 +77,25 @@
 
 <div class="overlay" id="ui">
   <div class="card">
-    <div class="title">Wedding AR Experience</div>
-    <div class="sub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra la pagina AR.</div>
+    <div class="title" id="uiTitle">NDA Experience</div>
+    <div class="sub" id="uiSub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra l’immagine.</div>
     <div class="row">
       <button class="btn primary" id="startBtn">Avvia esperienza</button>
       <button class="btn" id="helpBtn">Come funziona</button>
     </div>
     <div class="sub" style="margin-top:10px;font-size:12.5px;">
-      Consiglio: luce buona + pagina ferma 1–2 sec.
+      Consiglio: luce buona + immagine ferma 1–2 sec.
     </div>
   </div>
 </div>
 
+<!-- Scena: imageTargetSrc lo settiamo via JS leggendo config.json -->
 <a-scene
-  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
   embedded
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
-
-  <a-assets>
-    <!-- Nota: crossorigin aiuta su molte combinazioni browser/CDN -->
-    <video id="v1" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_cbfeceaf5a244d839a6d4fdefa666bda/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
-
-    <video id="v2" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_5741e3a04b2f45c1ab8efe8450641163/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
-
-    <video id="v3" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_68bb22b5292a4047a7ec9bedea327b65/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
-  </a-assets>
-
+  <a-assets id="assetsRoot"></a-assets>
   <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
-
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-plane width="1" height="1" material="shader: flat; src: #v1"></a-plane>
-  </a-entity>
-
-  <a-entity mindar-image-target="targetIndex: 1">
-    <a-plane width="1" height="1" material="shader: flat; src: #v2"></a-plane>
-  </a-entity>
-
-  <a-entity mindar-image-target="targetIndex: 2">
-    <a-plane width="1" height="1" material="shader: flat; src: #v3"></a-plane>
-  </a-entity>
-
 </a-scene>
 
 <script>
@@ -132,13 +105,14 @@
   const status = document.getElementById("status");
   const page = document.getElementById("page");
 
-  const scene = document.querySelector("a-scene");
-  const vids = [
-    { el: document.getElementById("v1"), name: "La nostra storia" },
-    { el: document.getElementById("v2"), name: "Curiosità & momenti" },
-    { el: document.getElementById("v3"), name: "Grazie" }
-  ];
+  const uiTitle = document.getElementById("uiTitle");
+  const uiSub = document.getElementById("uiSub");
 
+  const scene = document.querySelector("a-scene");
+  const assetsRoot = document.getElementById("assetsRoot");
+
+  let cfg = null;
+  let targets = []; // { name, type, src, el }
   let activeIdx = null;
 
   function setStatus(text){ status.textContent = "AR " + text; }
@@ -149,29 +123,29 @@
   function hidePage(){ page.classList.add("hidden"); page.textContent = "Pagina: —"; }
 
   function stopAll(){
-    vids.forEach(v => {
-      try { v.el.pause(); v.el.currentTime = 0; } catch(e){}
+    targets.forEach(t => {
+      if (t.type === "video" && t.el) {
+        try { t.el.pause(); t.el.currentTime = 0; } catch(e){}
+      }
     });
   }
 
   async function unlockVideos() {
-    // Sblocca la riproduzione come "gesture" (tasto Avvia)
-    for (const v of vids) {
+    for (const t of targets) {
+      if (t.type !== "video" || !t.el) continue;
       try {
-        v.el.muted = true;
-        v.el.playsInline = true;
-        v.el.setAttribute("playsinline", "");
-        v.el.setAttribute("webkit-playsinline", "");
-        await v.el.play();
-        v.el.pause();
-        v.el.currentTime = 0;
-      } catch(e) {
-        // anche se uno fallisce, continuiamo
-      }
+        t.el.muted = true;
+        t.el.playsInline = true;
+        t.el.setAttribute("playsinline", "");
+        t.el.setAttribute("webkit-playsinline", "");
+        await t.el.play();
+        t.el.pause();
+        t.el.currentTime = 0;
+      } catch(e) {}
     }
   }
 
-  // Pulsante audio: lo mostriamo durante il tracking
+  // Bottone audio (gesture separata)
   const audioBtn = document.createElement("button");
   audioBtn.className = "btn";
   audioBtn.textContent = "Attiva audio";
@@ -185,77 +159,148 @@
 
   audioBtn.addEventListener("click", async () => {
     if (activeIdx === null) return;
-    const v = vids[activeIdx].el;
+    const t = targets[activeIdx];
+    if (!t || t.type !== "video" || !t.el) return;
+
     try {
-      v.muted = false;
-      await v.play();
+      t.el.muted = false;
+      await t.el.play();
       audioBtn.textContent = "Audio attivo";
       setTimeout(() => audioBtn.style.display = "none", 800);
     } catch(e){
-      // Se blocca, resta muted
-      v.muted = true;
+      t.el.muted = true;
       audioBtn.textContent = "Audio non disponibile";
       setTimeout(() => audioBtn.style.display = "none", 1200);
     }
   });
 
-  helpBtn.addEventListener("click", () => {
-    alert(
-      "1) Tocca 'Avvia esperienza'\n" +
-      "2) Consenti la fotocamera\n" +
-      "3) Inquadra una pagina AR della rivista\n\n" +
-      "Se il video non parte subito: più luce e tieni la pagina ferma 1–2 secondi."
+  function helpText(){
+    const title = (cfg && cfg.title) ? cfg.title : "NDA Experience";
+    return (
+      `1) Tocca 'Avvia esperienza'\n` +
+      `2) Consenti la fotocamera\n` +
+      `3) Inquadra l’immagine AR\n\n` +
+      `Suggerimenti:\n- Luce buona\n- Tieni l’immagine ferma 1–2 secondi\n- Se non parte subito, avvicina/allontana leggermente\n\n` +
+      `${title}`
     );
-  });
+  }
+
+  helpBtn.addEventListener("click", () => alert(helpText()));
+
+  async function loadConfig() {
+    const res = await fetch("./config.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("config.json non trovato");
+    cfg = await res.json();
+
+    // UI title/sub
+    uiTitle.textContent = cfg.title || "NDA Experience";
+    uiSub.textContent = cfg.subtitle || "Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra l’immagine.";
+
+    // Set mindar-image attribute
+    const mindSrc = cfg.targetsMind || "targets.mind";
+    scene.setAttribute("mindar-image", `imageTargetSrc: ${mindSrc}; autoStart: false; uiLoading: no; uiError: no;`);
+
+    // Build assets and target entities
+    targets = (cfg.targets || []).map((t, i) => ({
+      name: t.name || `Target ${i+1}`,
+      type: t.type || "video",
+      src: t.src,
+      el: null
+    }));
+
+    // Create assets (video)
+    targets.forEach((t, i) => {
+      if (t.type === "video") {
+        const v = document.createElement("video");
+        v.setAttribute("id", `v${i}`);
+        v.setAttribute("crossorigin", "anonymous");
+        v.setAttribute("preload", "auto");
+        v.setAttribute("playsinline", "");
+        v.setAttribute("webkit-playsinline", "");
+        v.setAttribute("muted", "");
+        v.src = t.src;
+        assetsRoot.appendChild(v);
+        t.el = v;
+      }
+    });
+
+    // Create entities for each target
+    targets.forEach((t, i) => {
+      const ent = document.createElement("a-entity");
+      ent.setAttribute("mindar-image-target", `targetIndex: ${i}`);
+
+      const plane = document.createElement("a-plane");
+      plane.setAttribute("width", "1");
+      plane.setAttribute("height", "1");
+
+      if (t.type === "video") {
+        plane.setAttribute("material", `shader: flat; src: #v${i}`);
+      } else {
+        // per future estensioni (image, gltf, ecc.)
+        plane.setAttribute("material", `shader: flat; color: #FFFFFF`);
+      }
+
+      ent.appendChild(plane);
+      scene.appendChild(ent);
+
+      // Events
+      ent.addEventListener("targetFound", async () => {
+        activeIdx = i;
+        showPage(t.name);
+        setStatus("Contenuto attivo ✨");
+        stopAll();
+
+        if (t.type === "video" && t.el) {
+          try {
+            t.el.muted = true; // autoplay safe
+            await t.el.play();
+            audioBtn.textContent = "Attiva audio";
+            audioBtn.style.display = "inline-block";
+          } catch(e){
+            setStatus("Video non avviato");
+          }
+        }
+      });
+
+      ent.addEventListener("targetLost", () => {
+        if (activeIdx === i) {
+          activeIdx = null;
+          hidePage();
+          setStatus("Inquadra l’immagine ✨");
+          audioBtn.style.display = "none";
+          stopAll();
+        }
+      });
+    });
+  }
 
   startBtn.addEventListener("click", async () => {
     setStatus("Avvio fotocamera…");
     try {
-      // Carica + sblocca i video con gesto utente
-      vids.forEach(v => { try { v.el.load(); } catch(e){} });
+      // load + unlock with user gesture
+      targets.forEach(t => { if (t.type === "video" && t.el) { try { t.el.load(); } catch(e){} } });
       await unlockVideos();
 
       await scene.systems["mindar-image-system"].start();
       ui.style.display = "none";
-      setStatus("Inquadra una pagina ✨");
+      setStatus("Inquadra l’immagine ✨");
     } catch(e){
       setStatus("Errore fotocamera");
       alert("Non riesco ad avviare la fotocamera. Controlla permessi del browser e riprova.");
     }
   });
 
-  // Events: play MUTED sempre (così non viene bloccato su Android)
-  document.querySelectorAll("[mindar-image-target]").forEach((el, i) => {
-    el.addEventListener("targetFound", async () => {
-      activeIdx = i;
-      showPage(vids[i].name);
-      setStatus("Contenuto attivo ✨");
-      stopAll();
-
-      const v = vids[i].el;
-      try {
-        v.muted = true;               // fondamentale per autoplay su Android
-        await v.play();
-        audioBtn.textContent = "Attiva audio";
-        audioBtn.style.display = "inline-block"; // se vuoi audio, tap qui (gesture)
-      } catch(e){
-        // Se non parte nemmeno muted, di solito è encoding non compatibile
-        setStatus("Video non avviato");
-      }
-    });
-
-    el.addEventListener("targetLost", () => {
-      if (activeIdx === i) {
-        activeIdx = null;
-        hidePage();
-        setStatus("Inquadra una pagina ✨");
-        audioBtn.style.display = "none";
-        stopAll();
-      }
-    });
-  });
-
-  setStatus("Pronto ✨");
+  (async function init(){
+    try {
+      setStatus("Carico esperienza…");
+      await loadConfig();
+      setStatus("Pronto ✨");
+    } catch(e){
+      setStatus("Errore config");
+      console.error(e);
+      alert("Config non trovata o non valida. Verifica che 'config.json' sia presente nella stessa cartella dell'index.");
+    }
+  })();
 </script>
 
 </body>
