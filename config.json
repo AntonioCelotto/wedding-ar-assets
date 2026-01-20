@@ -5,17 +5,14 @@
   "targets": [
     {
       "name": "La nostra storia",
-      "type": "video",
       "src": "https://video.wixstatic.com/video/XXXX/1080p/mp4/file.mp4"
     },
     {
       "name": "Curiosità & momenti",
-      "type": "video",
       "src": "https://video.wixstatic.com/video/YYYY/1080p/mp4/file.mp4"
     },
     {
       "name": "Grazie",
-      "type": "video",
       "src": "https://video.wixstatic.com/video/ZZZZ/1080p/mp4/file.mp4"
     }
   ]
