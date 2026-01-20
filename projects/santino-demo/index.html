@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>NDA AR – Standalone</title>
+  <title>NDA Experience – AR</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -72,19 +72,19 @@
 
 <div class="pill">
   <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
-  <div class="badge hidden" id="page">Pagina: —</div>
+  <div class="badge hidden" id="page">Contenuto: —</div>
 </div>
 
 <div class="overlay" id="ui">
   <div class="card">
-    <div class="title">NDA AR Experience</div>
-    <div class="sub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra la pagina AR.</div>
+    <div class="title">NDA Experience</div>
+    <div class="sub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra l’immagine.</div>
     <div class="row">
       <button class="btn primary" id="startBtn">Avvia esperienza</button>
       <button class="btn" id="helpBtn">Come funziona</button>
     </div>
     <div class="sub" style="margin-top:10px;font-size:12.5px;">
-      Consiglio: luce buona + pagina ferma 1–2 sec.
+      Consiglio: luce buona + immagine ferma 1–2 sec.
     </div>
   </div>
 </div>
@@ -97,30 +97,15 @@
 
   <a-assets>
     <video id="v1" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_cbfeceaf5a244d839a6d4fdefa666bda/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
-
-    <video id="v2" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_5741e3a04b2f45c1ab8efe8450641163/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
-
-    <video id="v3" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_68bb22b5292a4047a7ec9bedea327b65/1080p/mp4/file.mp4"
+      src="https://video.wixstatic.com/video/047e10_ea477dc5727a472bb76b11e398397d01/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
   </a-assets>
 
   <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
+  <!-- 1 SOLO TARGET -->
   <a-entity mindar-image-target="targetIndex: 0">
     <a-plane width="1" height="1" material="shader: flat; src: #v1"></a-plane>
-  </a-entity>
-
-  <a-entity mindar-image-target="targetIndex: 1">
-    <a-plane width="1" height="1" material="shader: flat; src: #v2"></a-plane>
-  </a-entity>
-
-  <a-entity mindar-image-target="targetIndex: 2">
-    <a-plane width="1" height="1" material="shader: flat; src: #v3"></a-plane>
   </a-entity>
 
 </a-scene>
@@ -134,9 +119,7 @@
 
   const scene = document.querySelector("a-scene");
   const vids = [
-    { el: document.getElementById("v1"), name: "La nostra storia" },
-    { el: document.getElementById("v2"), name: "Curiosità & momenti" },
-    { el: document.getElementById("v3"), name: "Grazie" }
+    { el: document.getElementById("v1"), name: "Santino" }
   ];
 
   let activeIdx = null;
@@ -144,9 +127,12 @@
   function setStatus(text){ status.textContent = "AR " + text; }
   function showPage(name){
     page.classList.remove("hidden");
-    page.textContent = "Pagina: " + name;
+    page.textContent = "Contenuto: " + name;
   }
-  function hidePage(){ page.classList.add("hidden"); page.textContent = "Pagina: —"; }
+  function hidePage(){
+    page.classList.add("hidden");
+    page.textContent = "Contenuto: —";
+  }
 
   function stopAll(){
     vids.forEach(v => {
@@ -165,6 +151,7 @@
     }
   }
 
+  // Pulsante audio (opzionale): lo mostriamo quando il target è trovato
   const audioBtn = document.createElement("button");
   audioBtn.className = "btn";
   audioBtn.textContent = "Attiva audio";
@@ -179,47 +166,77 @@
   audioBtn.addEventListener("click", async () => {
     if (activeIdx === null) return;
     const v = vids[activeIdx].el;
-    v.muted = false;
-    await v.play();
-    audioBtn.style.display = "none";
+    try {
+      v.muted = false;
+      await v.play();
+      audioBtn.style.display = "none";
+    } catch(e) {
+      // se blocca, resta muted
+      v.muted = true;
+      audioBtn.textContent = "Audio non disponibile";
+      setTimeout(() => {
+        audioBtn.textContent = "Attiva audio";
+        audioBtn.style.display = "none";
+      }, 1200);
+    }
   });
 
   helpBtn.addEventListener("click", () => {
     alert(
       "1) Tocca 'Avvia esperienza'\n" +
       "2) Consenti la fotocamera\n" +
-      "3) Inquadra una pagina AR"
+      "3) Inquadra l’immagine\n\n" +
+      "Se non aggancia: più luce e tieni fermo 1–2 secondi."
     );
   });
 
   startBtn.addEventListener("click", async () => {
-    await unlockVideos();
-    await scene.systems["mindar-image-system"].start();
-    ui.style.display = "none";
-    setStatus("Inquadra una pagina ✨");
+    setStatus("Avvio fotocamera…");
+    try {
+      try { vids[0].el.load(); } catch(e){}
+      await unlockVideos();
+
+      await scene.systems["mindar-image-system"].start();
+      ui.style.display = "none";
+      setStatus("Inquadra l’immagine ✨");
+    } catch(e){
+      setStatus("Errore fotocamera");
+      alert("Non riesco ad avviare la fotocamera. Controlla permessi del browser e riprova.");
+    }
   });
 
+  // Eventi target (solo index 0)
   document.querySelectorAll("[mindar-image-target]").forEach((el, i) => {
     el.addEventListener("targetFound", async () => {
       activeIdx = i;
       showPage(vids[i].name);
+      setStatus("Contenuto attivo ✨");
       stopAll();
+
       const v = vids[i].el;
-      v.muted = true;
-      await v.play();
-      audioBtn.style.display = "inline-block";
+      try {
+        v.muted = true;
+        await v.play();
+        audioBtn.style.display = "inline-block";
+      } catch(e){
+        setStatus("Video non avviato");
+      }
     });
 
     el.addEventListener("targetLost", () => {
       if (activeIdx === i) {
         activeIdx = null;
         hidePage();
+        setStatus("Inquadra l’immagine ✨");
         audioBtn.style.display = "none";
         stopAll();
       }
     });
   });
+
+  setStatus("Pronto ✨");
 </script>
 
 </body>
 </html>
+
