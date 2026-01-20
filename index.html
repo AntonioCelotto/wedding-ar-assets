@@ -44,6 +44,7 @@
       box-shadow: 0 10px 24px rgba(0,0,0,.12);
     }
     .btn.primary { background: #ff4d88; color: white; }
+
     .pill {
       position: fixed; top: 10px; left: 10px; right: 10px;
       display:flex; justify-content:space-between; gap:10px;
@@ -76,8 +77,8 @@
 
 <div class="overlay" id="ui">
   <div class="card">
-    <div class="title" id="uiTitle">Wedding AR Experience</div>
-    <div class="sub" id="uiSub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra la pagina AR.</div>
+    <div class="title">Wedding AR Experience</div>
+    <div class="sub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra la pagina AR.</div>
     <div class="row">
       <button class="btn primary" id="startBtn">Avvia esperienza</button>
       <button class="btn" id="helpBtn">Come funziona</button>
@@ -95,7 +96,6 @@
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <!-- Nota: crossorigin aiuta su molte combinazioni browser/CDN -->
     <video id="v1" crossorigin="anonymous"
       src="https://video.wixstatic.com/video/047e10_cbfeceaf5a244d839a6d4fdefa666bda/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
@@ -132,9 +132,6 @@
   const status = document.getElementById("status");
   const page = document.getElementById("page");
 
-  const uiTitle = document.getElementById("uiTitle");
-  const uiSub = document.getElementById("uiSub");
-
   const scene = document.querySelector("a-scene");
   const vids = [
     { el: document.getElementById("v1"), name: "La nostra storia" },
@@ -158,23 +155,16 @@
   }
 
   async function unlockVideos() {
-    // Sblocca la riproduzione come "gesture" (tasto Avvia)
     for (const v of vids) {
       try {
         v.el.muted = true;
-        v.el.playsInline = true;
-        v.el.setAttribute("playsinline", "");
-        v.el.setAttribute("webkit-playsinline", "");
         await v.el.play();
         v.el.pause();
         v.el.currentTime = 0;
-      } catch(e) {
-        // anche se uno fallisce, continuiamo
-      }
+      } catch(e){}
     }
   }
 
-  // Pulsante audio: lo mostriamo durante il tracking
   const audioBtn = document.createElement("button");
   audioBtn.className = "btn";
   audioBtn.textContent = "Attiva audio";
@@ -189,123 +179,46 @@
   audioBtn.addEventListener("click", async () => {
     if (activeIdx === null) return;
     const v = vids[activeIdx].el;
-    try {
-      v.muted = false;
-      await v.play();
-      audioBtn.textContent = "Audio attivo";
-      setTimeout(() => audioBtn.style.display = "none", 800);
-    } catch(e){
-      // Se blocca, resta muted
-      v.muted = true;
-      audioBtn.textContent = "Audio non disponibile";
-      setTimeout(() => audioBtn.style.display = "none", 1200);
-    }
+    v.muted = false;
+    await v.play();
+    audioBtn.style.display = "none";
   });
 
   helpBtn.addEventListener("click", () => {
     alert(
       "1) Tocca 'Avvia esperienza'\n" +
       "2) Consenti la fotocamera\n" +
-      "3) Inquadra una pagina AR\n\n" +
-      "Se il video non parte subito: più luce e tieni la pagina ferma 1–2 secondi."
+      "3) Inquadra una pagina AR"
     );
   });
 
-  // ✅ PATCH NDA: carica config.json e aggiorna MIND + VIDEO + NOMI (senza cambiare il motore)
-  async function loadConfigAndApply() {
-    try {
-      const res = await fetch("./config.json", { cache: "no-store" });
-      if (!res.ok) return;
-      const cfg = await res.json();
-
-      // UI text
-      if (cfg.title) uiTitle.textContent = cfg.title;
-      if (cfg.subtitle) uiSub.textContent = cfg.subtitle;
-
-      // targets.mind configurabile
-      if (cfg.targetsMind) {
-        scene.setAttribute(
-          "mindar-image",
-          `imageTargetSrc: ${cfg.targetsMind}; autoStart: false; uiLoading: no; uiError: no;`
-        );
-      }
-
-      // video src + names
-      const map = [
-        { id: "v1", idx: 0 },
-        { id: "v2", idx: 1 },
-        { id: "v3", idx: 2 }
-      ];
-
-      map.forEach(({ id, idx }) => {
-        const v = document.getElementById(id);
-        const t = cfg.targets && cfg.targets[idx];
-        if (v && t && t.src) {
-          v.src = t.src;
-          try { v.load(); } catch(e) {}
-        }
-        if (t && t.name) {
-          vids[idx].name = t.name;
-        }
-      });
-
-    } catch(e) {
-      // Se config non esiste o è errata, non blocchiamo nulla: resta hardcoded
-      console.log("Config non caricata:", e);
-    }
-  }
-
-  // Carica config appena possibile (prima dello start)
-  loadConfigAndApply();
-
   startBtn.addEventListener("click", async () => {
-    setStatus("Avvio fotocamera…");
-    try {
-      // Carica + sblocca i video con gesto utente
-      vids.forEach(v => { try { v.el.load(); } catch(e){} });
-      await unlockVideos();
-
-      await scene.systems["mindar-image-system"].start();
-      ui.style.display = "none";
-      setStatus("Inquadra una pagina ✨");
-    } catch(e){
-      setStatus("Errore fotocamera");
-      alert("Non riesco ad avviare la fotocamera. Controlla permessi del browser e riprova.");
-    }
+    await unlockVideos();
+    await scene.systems["mindar-image-system"].start();
+    ui.style.display = "none";
+    setStatus("Inquadra una pagina ✨");
   });
 
-  // Events: play MUTED sempre (così non viene bloccato su Android)
   document.querySelectorAll("[mindar-image-target]").forEach((el, i) => {
     el.addEventListener("targetFound", async () => {
       activeIdx = i;
       showPage(vids[i].name);
-      setStatus("Contenuto attivo ✨");
       stopAll();
-
       const v = vids[i].el;
-      try {
-        v.muted = true;               // fondamentale per autoplay su Android
-        await v.play();
-        audioBtn.textContent = "Attiva audio";
-        audioBtn.style.display = "inline-block"; // se vuoi audio, tap qui (gesture)
-      } catch(e){
-        // Se non parte nemmeno muted, di solito è encoding non compatibile
-        setStatus("Video non avviato");
-      }
+      v.muted = true;
+      await v.play();
+      audioBtn.style.display = "inline-block";
     });
 
     el.addEventListener("targetLost", () => {
       if (activeIdx === i) {
         activeIdx = null;
         hidePage();
-        setStatus("Inquadra una pagina ✨");
         audioBtn.style.display = "none";
         stopAll();
       }
     });
   });
-
-  setStatus("Pronto ✨");
 </script>
 
 </body>
