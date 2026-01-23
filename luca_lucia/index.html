@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>NDA Wedding Experience – Storia</title>
+  <title>NDA Wedding Experience – Luca & Lucia</title>
 
   <!-- A-Frame + MindAR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -110,25 +110,18 @@
       box-shadow: 0 12px 30px rgba(0,0,0,.12);
     }
 
-    .badge strong {
-      font-weight: 900;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+    .badge strong { font-weight: 900; }
+    .hidden { display: none !important; }
   </style>
 </head>
 
 <body>
 
-<!-- STATUS -->
 <div class="pill">
   <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
   <div class="badge hidden" id="page">Pagina: —</div>
 </div>
 
-<!-- OVERLAY START -->
 <div class="overlay" id="ui">
   <div class="card">
     <div class="title">NDA Wedding Experience</div>
@@ -146,7 +139,6 @@
   </div>
 </div>
 
-<!-- SCENA AR -->
 <a-scene
   mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
   embedded
@@ -154,17 +146,14 @@
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <!-- STORIA -->
     <video id="v1" crossorigin="anonymous"
       src="https://video.wixstatic.com/video/047e10_2c956c4beb9b47c0bcf73fac076d9ab5/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
 
-    <!-- CURIOSITÀ -->
     <video id="v2" crossorigin="anonymous"
       src="https://video.wixstatic.com/video/047e10_d269b19555934d9e8026c94430520d54/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
 
-    <!-- GRAZIE -->
     <video id="v3" crossorigin="anonymous"
       src="https://video.wixstatic.com/video/047e10_ecfe6c4b3ae24fe8a167624dfceed0d0/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
@@ -172,17 +161,14 @@
 
   <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-  <!-- TARGET 0 – STORIA -->
   <a-entity mindar-image-target="targetIndex: 0">
     <a-plane width="1" height="1" material="shader: flat; src: #v1"></a-plane>
   </a-entity>
 
-  <!-- TARGET 1 – CURIOSITÀ -->
   <a-entity mindar-image-target="targetIndex: 1">
     <a-plane width="1" height="1" material="shader: flat; src: #v2"></a-plane>
   </a-entity>
 
-  <!-- TARGET 2 – GRAZIE -->
   <a-entity mindar-image-target="targetIndex: 2">
     <a-plane width="1" height="1" material="shader: flat; src: #v3"></a-plane>
   </a-entity>
@@ -206,21 +192,12 @@
   let activeIdx = null;
 
   function setStatus(t) { status.textContent = "AR " + t; }
-  function showPage(n) {
-    page.classList.remove("hidden");
-    page.textContent = "Pagina: " + n;
-  }
-  function hidePage() {
-    page.classList.add("hidden");
-    page.textContent = "Pagina: —";
-  }
+  function showPage(n) { page.classList.remove("hidden"); page.textContent = "Pagina: " + n; }
+  function hidePage() { page.classList.add("hidden"); page.textContent = "Pagina: —"; }
 
   function stopAll() {
     vids.forEach(v => {
-      try {
-        v.el.pause();
-        v.el.currentTime = 0;
-      } catch (e) {}
+      try { v.el.pause(); v.el.currentTime = 0; } catch (e) {}
     });
   }
 
@@ -255,11 +232,7 @@
   });
 
   helpBtn.addEventListener("click", () => {
-    alert(
-      "1) Tocca 'Avvia esperienza'\n" +
-      "2) Consenti la fotocamera\n" +
-      "3) Inquadra una pagina della rivista"
-    );
+    alert("1) Tocca 'Avvia esperienza'\n2) Consenti la fotocamera\n3) Inquadra una pagina della rivista");
   });
 
   startBtn.addEventListener("click", async () => {
