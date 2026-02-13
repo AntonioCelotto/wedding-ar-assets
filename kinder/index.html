@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Kinder AR – Tap sul tavolo + fallback iPhone</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kinder AR – NDA</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -12,65 +12,78 @@
     html, body { margin:0; width:100%; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial; }
     body { background:#0d0f16; }
 
-    .overlay{
-      position:fixed; inset:0; z-index:50;
+    /* Kinder style */
+    .overlay {
+      position: fixed; inset: 0;
       display:flex; align-items:center; justify-content:center;
-      padding:18px;
+      z-index: 20;
+      padding: 18px;
       background:
         radial-gradient(circle at 50% 25%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%),
         linear-gradient(180deg, #0b2a7a 0%, #0d0f16 55%, #c9492f 120%);
     }
-    .card{
-      width:min(640px, 100%);
+    .card {
+      width: min(560px, 100%);
       background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.70);
       border-radius: 22px;
       padding: 18px;
       text-align:center;
       box-shadow: 0 18px 55px rgba(0,0,0,.35);
-      border: 1px solid rgba(255,255,255,.7);
       backdrop-filter: blur(10px);
     }
-    .title{ margin:2px 0 6px; font-size:20px; font-weight:900; color:#0b2a7a; }
-    .sub{ margin:0 0 14px; font-size:14px; line-height:1.4; color:rgba(0,0,0,.70); }
+    .title { margin: 2px 0 6px; font-size: 20px; font-weight: 900; color:#0b2a7a; }
+    .sub { margin: 0 0 12px; font-size: 14px; color: rgba(0,0,0,.70); line-height: 1.4; }
 
-    .row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-    .btn{
-      border:none; border-radius:999px;
-      padding:12px 18px;
-      font-weight:900; cursor:pointer;
-      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    .row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .btn {
+      border: none; border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
     }
-    .btn.primary{ background:#0b2a7a; color:#fff; }
-    .btn.orange{ background:#c9492f; color:#fff; }
-    .btn.white{ background:#fff; color:#0b2a7a; border:1px solid rgba(11,42,122,.25); }
+    .btn.primary { background: #0b2a7a; color: white; }
+    .btn.white { background: #ffffff; color: #0b2a7a; border: 1px solid rgba(11,42,122,.25); }
 
-    .pill{
-      position:fixed; top:10px; left:10px; right:10px;
+    .pill {
+      position: fixed; top: 10px; left: 10px; right: 10px;
       display:flex; justify-content:space-between; gap:10px;
-      z-index:60; pointer-events:none;
+      z-index: 30;
+      pointer-events:none;
     }
-    .badge{
+    .badge {
       pointer-events:auto;
       display:inline-flex; align-items:center; gap:8px;
-      padding:10px 12px; border-radius:999px;
+      padding: 10px 12px;
+      border-radius: 999px;
       background: rgba(255,255,255,.72);
       border: 1px solid rgba(255,255,255,.9);
       color: rgba(0,0,0,.75);
-      font-size:13px;
+      font-size: 13px;
       backdrop-filter: blur(10px);
       box-shadow: 0 12px 30px rgba(0,0,0,.18);
     }
-    .badge strong{ color:#0b2a7a; font-weight:900; }
-    .hidden{ display:none !important; }
+    .badge strong { color:#0b2a7a; font-weight: 900; }
+    .hidden { display:none !important; }
 
-    .controls{
-      position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-      z-index:70; display:none; gap:8px; flex-wrap:wrap; justify-content:center;
-      width:min(720px, 92vw);
+    /* Audio button */
+    .audioBtn {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: none;
+      background: #c9492f;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      cursor: pointer;
     }
-
-    #sceneWebXR, #sceneMindAR { position:fixed; inset:0; }
-    .off { display:none !important; }
   </style>
 </head>
 
@@ -78,83 +91,46 @@
 
 <div class="pill">
   <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
-  <div class="badge hidden" id="modeBadge">Modalità: —</div>
+  <div class="badge hidden" id="page">Inquadra il Kinder</div>
 </div>
 
 <div class="overlay" id="ui">
   <div class="card">
     <div class="title">Kinder AR Experience</div>
-    <div class="sub">
-      Tocca <b>“Avvia”</b>. Su Android compatibile potrai <b>toccare il tavolo</b> per posizionare il video.
-      Su iPhone useremo la modalità compatibile con target (inquadrando il prodotto).
-    </div>
+    <div class="sub">Tocca “Avvia”, consenti la fotocamera, poi inquadra il prodotto/immagine target.</div>
     <div class="row">
-      <button class="btn primary" id="startBtn">Avvia</button>
+      <button class="btn primary" id="startBtn">Avvia esperienza</button>
       <button class="btn white" id="helpBtn">Come funziona</button>
     </div>
     <div class="sub" style="margin-top:10px;font-size:12.5px;">
-      Suggerimento: luce buona + movimenti lenti.
+      Consiglio: luce buona + target fermo 1–2 sec.
     </div>
   </div>
 </div>
 
-<div class="controls" id="controls">
-  <button class="btn orange" id="audioBtn">Attiva audio</button>
-  <button class="btn white" id="biggerBtn">+</button>
-  <button class="btn white" id="smallerBtn">−</button>
-  <button class="btn white" id="rotLBtn">⟲</button>
-  <button class="btn white" id="rotRBtn">⟳</button>
-  <button class="btn white" id="resetBtn">Reset</button>
-</div>
+<button class="audioBtn" id="audioBtn">Attiva audio</button>
 
-<!-- =========================
-     WEBXR SCENE (Android Chrome + ARCore)
-========================= -->
-<a-scene id="sceneWebXR" class="off"
-  renderer="colorManagement: true;"
-  vr-mode-ui="enabled:false"
-  embedded>
-
-  <a-assets>
-    <video id="vid_w" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_0a43b7ad5180411290646dbbe8dd4f19/1080p/mp4/file.mp4"
-      preload="auto" playsinline webkit-playsinline muted></video>
-  </a-assets>
-
-  <a-camera id="camW" position="0 0 0"></a-camera>
-
-  <a-entity id="reticle" visible="false">
-    <a-ring radius-inner="0.05" radius-outer="0.065" rotation="-90 0 0"
-      material="color: #ffffff; opacity: 0.9; shader: flat"></a-ring>
-  </a-entity>
-
-  <a-entity id="anchorW" visible="false">
-    <a-plane id="planeW"
-      width="0.9" height="0.506"
-      rotation="-15 0 0"
-      material="shader: flat; src: #vid_w"></a-plane>
-  </a-entity>
-</a-scene>
-
-<!-- =========================
-     MINDAR FALLBACK (iPhone / no WebXR)
-========================= -->
-<a-scene id="sceneMindAR" class="off"
+<a-scene
   mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
   embedded
   vr-mode-ui="enabled:false"
   device-orientation-permission-ui="enabled:false">
 
   <a-assets>
-    <video id="vid_m" crossorigin="anonymous"
+    <video id="v1" crossorigin="anonymous"
       src="https://video.wixstatic.com/video/047e10_0a43b7ad5180411290646dbbe8dd4f19/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
   </a-assets>
 
   <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-  <a-entity id="target0" mindar-image-target="targetIndex: 0"></a-entity>
-  <a-entity id="anchorM" visible="false"></a-entity>
+  <!-- 1 SOLO TARGET -->
+  <a-entity id="t0" mindar-image-target="targetIndex: 0">
+    <!-- piano video sopra al target -->
+    <a-plane width="1" height="0.5625" position="0 0 0"
+      material="shader: flat; src: #v1"></a-plane>
+  </a-entity>
+
 </a-scene>
 
 <script>
@@ -162,297 +138,69 @@
   const startBtn = document.getElementById("startBtn");
   const helpBtn = document.getElementById("helpBtn");
   const status = document.getElementById("status");
-  const modeBadge = document.getElementById("modeBadge");
-
-  const controls = document.getElementById("controls");
+  const page = document.getElementById("page");
   const audioBtn = document.getElementById("audioBtn");
-  const biggerBtn = document.getElementById("biggerBtn");
-  const smallerBtn = document.getElementById("smallerBtn");
-  const rotLBtn = document.getElementById("rotLBtn");
-  const rotRBtn = document.getElementById("rotRBtn");
-  const resetBtn = document.getElementById("resetBtn");
 
-  const sceneWebXR = document.getElementById("sceneWebXR");
-  const sceneMindAR = document.getElementById("sceneMindAR");
+  const scene = document.querySelector("a-scene");
+  const target = document.getElementById("t0");
+  const v1 = document.getElementById("v1");
 
-  const vidW = document.getElementById("vid_w");
-  const reticle = document.getElementById("reticle");
-  const anchorW = document.getElementById("anchorW");
-  const planeW = document.getElementById("planeW");
+  function setStatus(text){ status.textContent = "AR " + text; }
 
-  const vidM = document.getElementById("vid_m");
-  const target0 = document.getElementById("target0");
-  const anchorM = document.getElementById("anchorM");
+  function stopVideo(){
+    try { v1.pause(); v1.currentTime = 0; } catch(e){}
+  }
 
-  let placed = false;
-  let scale = 1;
-  let rotY = 0;
-
-  function setStatus(t){ status.textContent = "AR " + t; }
-  function setMode(t){ modeBadge.classList.remove("hidden"); modeBadge.textContent = "Modalità: " + t; }
-
-  async function unlockVideo(v){
+  async function unlockVideo() {
+    // Sblocca autoplay su mobile (gesture)
     try {
-      v.muted = true;
-      await v.play();
-      v.pause();
-      v.currentTime = 0;
+      v1.muted = true;
+      await v1.play();
+      v1.pause();
+      v1.currentTime = 0;
     } catch(e){}
   }
 
   helpBtn.addEventListener("click", () => {
-    alert(
-      "Android compatibile: la camera si apre e tocchi il tavolo per posizionare.\n" +
-      "iPhone: inquadri il prodotto Kinder e premi 'Posiziona sul tavolo'."
-    );
+    alert("1) Tocca 'Avvia esperienza'\n2) Consenti la fotocamera\n3) Inquadra il target Kinder");
   });
 
   startBtn.addEventListener("click", async () => {
-    // tenta WebXR, se fallisce -> MindAR
-    if (navigator.xr && navigator.xr.isSessionSupported) {
-      try {
-        const ok = await navigator.xr.isSessionSupported("immersive-ar");
-        if (ok) { startWebXR(); return; }
-      } catch(e){}
-    }
-    startMindAR();
+    await unlockVideo();
+    await scene.systems["mindar-image-system"].start();
+    ui.style.display = "none";
+    setStatus("Inquadra il Kinder ✨");
+    page.classList.remove("hidden");
   });
 
-  // =========================
-  // WEBXR MODE (hit-test tap)
-  // =========================
-  let xrSession = null;
-  let xrRefSpace = null;
-  let viewerSpace = null;
-  let hitTestSource = null;
-  let lastHitPose = null;
-
-  function applyTransformWebXR(){
-    planeW.object3D.scale.set(scale, scale, scale);
-    planeW.object3D.rotation.y = rotY;
-  }
-
-  async function startWebXR(){
-    setMode("Tap sul tavolo (WebXR)");
-    setStatus("Aprendo fotocamera…");
-
-    sceneMindAR.classList.add("off");
-    sceneWebXR.classList.remove("off");
-
-    ui.style.display = "none";
-    controls.style.display = "flex";
-    placed = false; scale = 1; rotY = 0;
-    audioBtn.style.display = "inline-block";
-    anchorW.setAttribute("visible", "false");
-    reticle.setAttribute("visible", "false");
-
-    await unlockVideo(vidW);
-
-    // ✅ avvio sessione WebXR manuale (camera subito)
+  // Quando trova il target: avvia video (muted), mostra tasto audio
+  target.addEventListener("targetFound", async () => {
+    setStatus("Trovato ✅");
+    page.textContent = "In riproduzione…";
+    stopVideo();
     try {
-      xrSession = await navigator.xr.requestSession("immersive-ar", {
-        requiredFeatures: ["hit-test"],
-        optionalFeatures: ["dom-overlay"],
-        domOverlay: { root: document.body }
-      });
-
-      sceneWebXR.renderer.xr.enabled = true;
-      await sceneWebXR.renderer.xr.setSession(xrSession);
-
-      xrRefSpace = await xrSession.requestReferenceSpace("local");
-      viewerSpace = await xrSession.requestReferenceSpace("viewer");
-      hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
-
-      setStatus("Tocca il tavolo per posizionare ✨");
-    } catch (e) {
-      console.warn("WebXR fail -> fallback MindAR", e);
-      startMindAR();
-      return;
-    }
-
-    // loop hit-test
-    const onXRFrame = (t, frame) => {
-      if (!xrSession) return;
-      const hits = frame.getHitTestResults(hitTestSource);
-      if (hits.length) {
-        const pose = hits[0].getPose(xrRefSpace);
-        if (pose) {
-          lastHitPose = pose.transform;
-          const p = lastHitPose.position;
-          const o = lastHitPose.orientation;
-          reticle.object3D.position.set(p.x, p.y, p.z);
-          reticle.object3D.quaternion.set(o.x, o.y, o.z, o.w);
-          reticle.setAttribute("visible", true);
-        }
-      } else {
-        reticle.setAttribute("visible", false);
-      }
-      xrSession.requestAnimationFrame(onXRFrame);
-    };
-    xrSession.requestAnimationFrame(onXRFrame);
-
-    // tap to place
-    const tapPlace = async () => {
-      if (placed) return;
-      if (!lastHitPose) return;
-
-      const p = lastHitPose.position;
-      const o = lastHitPose.orientation;
-
-      anchorW.object3D.position.set(p.x, p.y, p.z);
-      anchorW.object3D.quaternion.set(o.x, o.y, o.z, o.w);
-      anchorW.setAttribute("visible", true);
-
-      placed = true;
-      setStatus("Posizionato ✅");
-
-      try { vidW.muted = true; await vidW.play(); } catch(e){}
-    };
-
-    sceneWebXR.canvas?.addEventListener("click", tapPlace, { passive:true });
-    sceneWebXR.canvas?.addEventListener("touchend", tapPlace, { passive:true });
-
-    // controls
-    biggerBtn.onclick = () => { scale = Math.min(2.2, scale + 0.1); applyTransformWebXR(); };
-    smallerBtn.onclick = () => { scale = Math.max(0.5, scale - 0.1); applyTransformWebXR(); };
-    rotLBtn.onclick = () => { rotY -= 0.15; applyTransformWebXR(); };
-    rotRBtn.onclick = () => { rotY += 0.15; applyTransformWebXR(); };
-
-    audioBtn.onclick = async () => {
-      try { vidW.muted = false; await vidW.play(); audioBtn.style.display = "none"; } catch(e){}
-    };
-
-    resetBtn.onclick = async () => {
-      placed = false;
-      lastHitPose = null;
-      anchorW.setAttribute("visible", "false");
-      reticle.setAttribute("visible", "false");
-      try { vidW.pause(); vidW.currentTime = 0; } catch(e){}
-      setStatus("Tocca il tavolo per posizionare ✨");
+      v1.muted = true;
+      await v1.play();
       audioBtn.style.display = "inline-block";
-      scale = 1; rotY = 0; applyTransformWebXR();
-    };
-  }
+    } catch(e){}
+  });
 
-  // =========================
-  // MINDAR FALLBACK MODE
-  // =========================
-  function applyTransformMindAR(){
-    const p = anchorM.querySelector("a-plane");
-    if (!p) return;
-    p.object3D.scale.set(scale, scale, scale);
-    p.object3D.rotation.y = rotY;
-  }
+  // Quando perde il target: stop video
+  target.addEventListener("targetLost", () => {
+    setStatus("Inquadra il Kinder ✨");
+    page.textContent = "Inquadra il Kinder";
+    audioBtn.style.display = "none";
+    stopVideo();
+  });
 
-  function stopVideoM(){
-    try { vidM.pause(); vidM.currentTime = 0; } catch(e){}
-  }
-
-  async function startMindAR(){
-    setMode("Compatibile iPhone (MindAR)");
-    setStatus("Avviando…");
-
-    sceneWebXR.classList.add("off");
-    sceneMindAR.classList.remove("off");
-
-    ui.style.display = "none";
-    controls.style.display = "flex";
-    placed = false; scale = 1; rotY = 0;
-    audioBtn.style.display = "inline-block";
-    anchorM.setAttribute("visible", "false");
-    while (anchorM.firstChild) anchorM.removeChild(anchorM.firstChild);
-
-    await unlockVideo(vidM);
-
+  // Attiva audio (solo con click)
+  audioBtn.addEventListener("click", async () => {
     try {
-      await sceneMindAR.systems["mindar-image-system"].start();
-    } catch(e) {
-      console.warn("MindAR start error", e);
-    }
-    setStatus("Inquadra il prodotto ✨");
-
-    // place button fallback
-    let placeBtn = document.getElementById("placeBtnFallback");
-    if (!placeBtn){
-      placeBtn = document.createElement("button");
-      placeBtn.id = "placeBtnFallback";
-      placeBtn.className = "btn orange";
-      placeBtn.textContent = "Posiziona sul tavolo";
-      placeBtn.style.position = "fixed";
-      placeBtn.style.top = "64px";
-      placeBtn.style.left = "50%";
-      placeBtn.style.transform = "translateX(-50%)";
-      placeBtn.style.zIndex = "80";
-      placeBtn.style.display = "none";
-      document.body.appendChild(placeBtn);
-    }
-
-    target0.addEventListener("targetFound", async () => {
-      if (placed) return;
-      setStatus("Trovato ✅ Premi Posiziona");
-      placeBtn.style.display = "inline-block";
-      try { vidM.muted = true; await vidM.play(); } catch(e){}
-    });
-
-    target0.addEventListener("targetLost", () => {
-      if (!placed) {
-        placeBtn.style.display = "none";
-        setStatus("Inquadra il prodotto ✨");
-        stopVideoM();
-      }
-    });
-
-    placeBtn.onclick = async () => {
-      if (placed) return;
-      placed = true;
-      placeBtn.style.display = "none";
-      setStatus("Posizionato ✅");
-
-      anchorM.setAttribute("visible", "true");
-      while (anchorM.firstChild) anchorM.removeChild(anchorM.firstChild);
-
-      const plane = document.createElement("a-plane");
-      plane.setAttribute("width", "0.9");
-      plane.setAttribute("height", "0.506");
-      plane.setAttribute("material", "shader: flat; src: #vid_m");
-      plane.setAttribute("position", "0 0.18 0");
-      plane.setAttribute("rotation", "-15 0 0");
-      anchorM.appendChild(plane);
-
-      target0.object3D.updateMatrixWorld(true);
-      const m = target0.object3D.matrixWorld.clone();
-
-      const pos = new THREE.Vector3();
-      const quat = new THREE.Quaternion();
-      const scl = new THREE.Vector3();
-      m.decompose(pos, quat, scl);
-
-      anchorM.object3D.position.copy(pos);
-      anchorM.object3D.quaternion.copy(quat);
-      anchorM.object3D.scale.set(1,1,1);
-
-      try { vidM.muted = true; await vidM.play(); } catch(e){}
-    };
-
-    biggerBtn.onclick = () => { scale = Math.min(2.2, scale + 0.1); applyTransformMindAR(); };
-    smallerBtn.onclick = () => { scale = Math.max(0.5, scale - 0.1); applyTransformMindAR(); };
-    rotLBtn.onclick = () => { rotY -= 0.15; applyTransformMindAR(); };
-    rotRBtn.onclick = () => { rotY += 0.15; applyTransformMindAR(); };
-
-    audioBtn.onclick = async () => {
-      try { vidM.muted = false; await vidM.play(); audioBtn.style.display = "none"; } catch(e){}
-    };
-
-    resetBtn.onclick = () => {
-      placed = false;
-      anchorM.setAttribute("visible", "false");
-      while (anchorM.firstChild) anchorM.removeChild(anchorM.firstChild);
-      audioBtn.style.display = "inline-block";
-      setStatus("Inquadra il prodotto ✨");
-      stopVideoM();
-      scale = 1; rotY = 0;
-    };
-  }
+      v1.muted = false;
+      await v1.play();
+      audioBtn.style.display = "none";
+    } catch(e){}
+  });
 </script>
 
 </body>
