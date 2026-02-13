@@ -3,18 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Kinder AR – Tap sul Tavolo + Fallback iPhone</title>
+  <title>Kinder AR – Tap sul tavolo + fallback iPhone</title>
 
-  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <!-- MindAR (fallback iPhone / no WebXR) -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     html, body { margin:0; width:100%; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial; }
     body { background:#0d0f16; }
 
-    /* UI Kinder-like */
     .overlay{
       position:fixed; inset:0; z-index:50;
       display:flex; align-items:center; justify-content:center;
@@ -24,7 +21,7 @@
         linear-gradient(180deg, #0b2a7a 0%, #0d0f16 55%, #c9492f 120%);
     }
     .card{
-      width:min(620px, 100%);
+      width:min(640px, 100%);
       background: rgba(255,255,255,.92);
       border-radius: 22px;
       padding: 18px;
@@ -69,10 +66,9 @@
     .controls{
       position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
       z-index:70; display:none; gap:8px; flex-wrap:wrap; justify-content:center;
-      width:min(680px, 92vw);
+      width:min(720px, 92vw);
     }
 
-    /* Scenes toggle */
     #sceneWebXR, #sceneMindAR { position:fixed; inset:0; }
     .off { display:none !important; }
   </style>
@@ -88,9 +84,9 @@
 <div class="overlay" id="ui">
   <div class="card">
     <div class="title">Kinder AR Experience</div>
-    <div class="sub" id="uiText">
-      Tocca <b>“Avvia”</b>. Se il tuo dispositivo supporta AR avanzata, potrai <b>toccare il tavolo</b> per posizionare il video.<br/>
-      Altrimenti useremo la modalità compatibile (inquadrando il prodotto).
+    <div class="sub">
+      Tocca <b>“Avvia”</b>. Su Android compatibile potrai <b>toccare il tavolo</b> per posizionare il video.
+      Su iPhone useremo la modalità compatibile con target (inquadrando il prodotto).
     </div>
     <div class="row">
       <button class="btn primary" id="startBtn">Avvia</button>
@@ -102,7 +98,6 @@
   </div>
 </div>
 
-<!-- Bottom controls -->
 <div class="controls" id="controls">
   <button class="btn orange" id="audioBtn">Attiva audio</button>
   <button class="btn white" id="biggerBtn">+</button>
@@ -112,49 +107,37 @@
   <button class="btn white" id="resetBtn">Reset</button>
 </div>
 
-<!-- Shared assets -->
-<a-assets id="sharedAssets" class="off">
-  <video id="vid" crossorigin="anonymous"
-    src="https://video.wixstatic.com/video/047e10_52e17abd0ace4f278579d8554e2e40c3/480p/mp4/file.mp4"
-    preload="auto" playsinline webkit-playsinline muted></video>
-</a-assets>
-
 <!-- =========================
-     WEBXR SCENE (Android Chrome / supported devices)
-     Tap on table (hit-test) to place
+     WEBXR SCENE (Android Chrome + ARCore)
 ========================= -->
 <a-scene id="sceneWebXR" class="off"
-  renderer="colorManagement: true; physicallyCorrectLights: true;"
+  renderer="colorManagement: true;"
   vr-mode-ui="enabled:false"
-  webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #ui;"
   embedded>
 
-  <!-- attach shared video -->
   <a-assets>
     <video id="vid_w" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_52e17abd0ace4f278579d8554e2e40c3/480p/mp4/file.mp4"
+      src="https://video.wixstatic.com/video/047e10_0a43b7ad5180411290646dbbe8dd4f19/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
   </a-assets>
 
   <a-camera id="camW" position="0 0 0"></a-camera>
 
-  <!-- Reticle for hit-test -->
-  <a-entity id="reticle" visible="false"></a-entity>
+  <a-entity id="reticle" visible="false">
+    <a-ring radius-inner="0.05" radius-outer="0.065" rotation="-90 0 0"
+      material="color: #ffffff; opacity: 0.9; shader: flat"></a-ring>
+  </a-entity>
 
-  <!-- Anchored content -->
   <a-entity id="anchorW" visible="false">
     <a-plane id="planeW"
       width="0.9" height="0.506"
-      position="0 0 0"
       rotation="-15 0 0"
-      material="shader: flat; src: #vid_w">
-    </a-plane>
+      material="shader: flat; src: #vid_w"></a-plane>
   </a-entity>
 </a-scene>
 
 <!-- =========================
-     MINDAR FALLBACK (iPhone Safari / no WebXR)
-     Recognize Kinder -> press "Posiziona"
+     MINDAR FALLBACK (iPhone / no WebXR)
 ========================= -->
 <a-scene id="sceneMindAR" class="off"
   mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
@@ -164,7 +147,7 @@
 
   <a-assets>
     <video id="vid_m" crossorigin="anonymous"
-      src="https://video.wixstatic.com/video/047e10_52e17abd0ace4f278579d8554e2e40c3/480p/mp4/file.mp4"
+      src="https://video.wixstatic.com/video/047e10_0a43b7ad5180411290646dbbe8dd4f19/1080p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
   </a-assets>
 
@@ -175,371 +158,301 @@
 </a-scene>
 
 <script>
-/* =========================
-   UI + Shared state
-========================= */
-const ui = document.getElementById("ui");
-const startBtn = document.getElementById("startBtn");
-const helpBtn = document.getElementById("helpBtn");
-const status = document.getElementById("status");
-const modeBadge = document.getElementById("modeBadge");
+  const ui = document.getElementById("ui");
+  const startBtn = document.getElementById("startBtn");
+  const helpBtn = document.getElementById("helpBtn");
+  const status = document.getElementById("status");
+  const modeBadge = document.getElementById("modeBadge");
 
-const controls = document.getElementById("controls");
-const audioBtn = document.getElementById("audioBtn");
-const biggerBtn = document.getElementById("biggerBtn");
-const smallerBtn = document.getElementById("smallerBtn");
-const rotLBtn = document.getElementById("rotLBtn");
-const rotRBtn = document.getElementById("rotRBtn");
-const resetBtn = document.getElementById("resetBtn");
+  const controls = document.getElementById("controls");
+  const audioBtn = document.getElementById("audioBtn");
+  const biggerBtn = document.getElementById("biggerBtn");
+  const smallerBtn = document.getElementById("smallerBtn");
+  const rotLBtn = document.getElementById("rotLBtn");
+  const rotRBtn = document.getElementById("rotRBtn");
+  const resetBtn = document.getElementById("resetBtn");
 
-let scale = 1;
-let rotY = 0;
-let placed = false;
-let currentMode = null; // "webxr" | "mindar"
+  const sceneWebXR = document.getElementById("sceneWebXR");
+  const sceneMindAR = document.getElementById("sceneMindAR");
 
-/* =========================
-   Helpers
-========================= */
-function setStatus(t){ status.textContent = "AR " + t; }
-function setMode(t){
-  modeBadge.classList.remove("hidden");
-  modeBadge.textContent = "Modalità: " + t;
-}
-function isWebXRPossible(){
-  return !!(navigator.xr && navigator.xr.isSessionSupported);
-}
+  const vidW = document.getElementById("vid_w");
+  const reticle = document.getElementById("reticle");
+  const anchorW = document.getElementById("anchorW");
+  const planeW = document.getElementById("planeW");
 
-/* =========================
-   WEBXR HIT-TEST COMPONENT
-   (reticle updates each frame)
-========================= */
-AFRAME.registerComponent('hit-test-reticle', {
-  init: function () {
-    this.reticleEl = this.el;
-    this.sceneEl = this.el.sceneEl;
-    this.renderer = this.sceneEl.renderer;
-    this.session = null;
-    this.refSpace = null;
-    this.viewerSpace = null;
-    this.hitTestSource = null;
-    this.lastPose = null;
+  const vidM = document.getElementById("vid_m");
+  const target0 = document.getElementById("target0");
+  const anchorM = document.getElementById("anchorM");
 
-    this.onSessionStart = this.onSessionStart.bind(this);
-    this.onSessionEnd = this.onSessionEnd.bind(this);
+  let placed = false;
+  let scale = 1;
+  let rotY = 0;
 
-    this.sceneEl.addEventListener('enter-vr', () => {
-      const xr = this.renderer.xr;
-      const s = xr.getSession();
-      if (s) this.onSessionStart(s);
-    });
-  },
+  function setStatus(t){ status.textContent = "AR " + t; }
+  function setMode(t){ modeBadge.classList.remove("hidden"); modeBadge.textContent = "Modalità: " + t; }
 
-  async onSessionStart(session){
-    this.session = session;
-    session.addEventListener('end', this.onSessionEnd);
-
+  async function unlockVideo(v){
     try {
-      this.refSpace = await session.requestReferenceSpace('local');
-      this.viewerSpace = await session.requestReferenceSpace('viewer');
-      this.hitTestSource = await session.requestHitTestSource({ space: this.viewerSpace });
-    } catch(e){
-      console.warn("Hit-test init error", e);
-    }
-  },
-
-  onSessionEnd(){
-    this.session = null;
-    this.refSpace = null;
-    this.viewerSpace = null;
-    this.hitTestSource = null;
-    this.lastPose = null;
-    this.reticleEl.setAttribute('visible', false);
-  },
-
-  tick: function () {
-    const xr = this.renderer.xr;
-    const session = xr.getSession();
-    if (!session || !this.hitTestSource || !this.refSpace) return;
-
-    const frame = xr.getFrame();
-    if (!frame) return;
-
-    const hits = frame.getHitTestResults(this.hitTestSource);
-    if (hits.length) {
-      const hit = hits[0];
-      const pose = hit.getPose(this.refSpace);
-      if (pose) {
-        this.lastPose = pose;
-        const { position, orientation } = pose.transform;
-        this.reticleEl.object3D.position.set(position.x, position.y, position.z);
-        this.reticleEl.object3D.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w);
-        this.reticleEl.setAttribute('visible', true);
-      }
-    } else {
-      this.reticleEl.setAttribute('visible', false);
-    }
-  }
-});
-
-/* =========================
-   Mode bootstrap
-========================= */
-helpBtn.addEventListener("click", () => {
-  alert(
-    "Se supportato: tocchi il tavolo e posizioni il video.\n" +
-    "Altrimenti: inquadri il prodotto Kinder e premi 'Posiziona'.\n\n" +
-    "Poi puoi attivare audio e ridimensionare."
-  );
-});
-
-startBtn.addEventListener("click", async () => {
-  // Decide mode automatically
-  if (isWebXRPossible()) {
-    try {
-      const supported = await navigator.xr.isSessionSupported('immersive-ar');
-      if (supported) {
-        startWebXR();
-        return;
-      }
+      v.muted = true;
+      await v.play();
+      v.pause();
+      v.currentTime = 0;
     } catch(e){}
   }
-  startMindAR(); // fallback
-});
 
-/* =========================
-   WEBXR MODE (Tap on table)
-========================= */
-const sceneWebXR = document.getElementById("sceneWebXR");
-const sceneMindAR = document.getElementById("sceneMindAR");
+  helpBtn.addEventListener("click", () => {
+    alert(
+      "Android compatibile: la camera si apre e tocchi il tavolo per posizionare.\n" +
+      "iPhone: inquadri il prodotto Kinder e premi 'Posiziona sul tavolo'."
+    );
+  });
 
-const vidW = document.getElementById("vid_w");
-const reticle = document.getElementById("reticle");
-const anchorW = document.getElementById("anchorW");
-const planeW = document.getElementById("planeW");
-
-function applyTransformWebXR(){
-  planeW.object3D.scale.set(scale, scale, scale);
-  planeW.object3D.rotation.y = rotY;
-}
-
-async function unlockVideo(videoEl){
-  try {
-    videoEl.muted = true;
-    await videoEl.play();
-    videoEl.pause();
-    videoEl.currentTime = 0;
-  } catch(e){}
-}
-
-async function startWebXR(){
-  currentMode = "webxr";
-  setMode("Tap sul tavolo (WebXR)");
-  setStatus("Aprendo AR…");
-
-  sceneMindAR.classList.add("off");
-  sceneWebXR.classList.remove("off");
-
-  // build reticle visuals + component
-  reticle.setAttribute("hit-test-reticle", "");
-  // simple ring reticle
-  reticle.innerHTML = `
-    <a-ring radius-inner="0.05" radius-outer="0.065" rotation="-90 0 0"
-      material="color: #ffffff; opacity: 0.85; shader: flat"></a-ring>
-  `;
-
-  await unlockVideo(vidW);
-
-  ui.style.display = "none";
-  controls.style.display = "flex";
-  placed = false;
-  scale = 1; rotY = 0;
-  audioBtn.style.display = "inline-block";
-  anchorW.setAttribute("visible", "false");
-
-  // Enter AR (needs gesture -> we are in click)
-  try {
-    await sceneWebXR.enterVR();
-    setStatus("Tocca il tavolo per posizionare ✨");
-  } catch(e){
-    console.warn("enterVR AR failed, fallback to MindAR", e);
+  startBtn.addEventListener("click", async () => {
+    // tenta WebXR, se fallisce -> MindAR
+    if (navigator.xr && navigator.xr.isSessionSupported) {
+      try {
+        const ok = await navigator.xr.isSessionSupported("immersive-ar");
+        if (ok) { startWebXR(); return; }
+      } catch(e){}
+    }
     startMindAR();
-    return;
+  });
+
+  // =========================
+  // WEBXR MODE (hit-test tap)
+  // =========================
+  let xrSession = null;
+  let xrRefSpace = null;
+  let viewerSpace = null;
+  let hitTestSource = null;
+  let lastHitPose = null;
+
+  function applyTransformWebXR(){
+    planeW.object3D.scale.set(scale, scale, scale);
+    planeW.object3D.rotation.y = rotY;
   }
 
-  // Tap anywhere to place at reticle (first valid hit)
-  const placeOnTap = async () => {
-    if (placed) return;
-    if (!reticle.getAttribute("visible")) return;
+  async function startWebXR(){
+    setMode("Tap sul tavolo (WebXR)");
+    setStatus("Aprendo fotocamera…");
 
-    // Place anchor at reticle pose
-    anchorW.object3D.position.copy(reticle.object3D.position);
-    anchorW.object3D.quaternion.copy(reticle.object3D.quaternion);
-    anchorW.setAttribute("visible", "true");
+    sceneMindAR.classList.add("off");
+    sceneWebXR.classList.remove("off");
 
-    placed = true;
-    setStatus("Posizionato ✅");
-
-    try {
-      vidW.muted = true;
-      await vidW.play();
-    } catch(e){}
-  };
-
-  // Use scene canvas clicks for placement
-  sceneWebXR.canvas?.addEventListener("click", placeOnTap, { passive:true });
-  // Also handle touch
-  sceneWebXR.canvas?.addEventListener("touchend", placeOnTap, { passive:true });
-
-  // Reset handler for WebXR
-  resetBtn.onclick = () => {
-    placed = false;
-    anchorW.setAttribute("visible", "false");
-    try { vidW.pause(); vidW.currentTime = 0; } catch(e){}
-    setStatus("Tocca il tavolo per posizionare ✨");
+    ui.style.display = "none";
+    controls.style.display = "flex";
+    placed = false; scale = 1; rotY = 0;
     audioBtn.style.display = "inline-block";
-    scale = 1; rotY = 0; applyTransformWebXR();
-  };
+    anchorW.setAttribute("visible", "false");
+    reticle.setAttribute("visible", "false");
 
-  // Controls
-  biggerBtn.onclick = () => { scale = Math.min(2.2, scale + 0.1); applyTransformWebXR(); };
-  smallerBtn.onclick = () => { scale = Math.max(0.5, scale - 0.1); applyTransformWebXR(); };
-  rotLBtn.onclick = () => { rotY -= 0.15; applyTransformWebXR(); };
-  rotRBtn.onclick = () => { rotY += 0.15; applyTransformWebXR(); };
+    await unlockVideo(vidW);
 
-  audioBtn.onclick = async () => {
-    try { vidW.muted = false; await vidW.play(); audioBtn.style.display = "none"; } catch(e){}
-  };
-}
+    // ✅ avvio sessione WebXR manuale (camera subito)
+    try {
+      xrSession = await navigator.xr.requestSession("immersive-ar", {
+        requiredFeatures: ["hit-test"],
+        optionalFeatures: ["dom-overlay"],
+        domOverlay: { root: document.body }
+      });
 
-/* =========================
-   MINDAR FALLBACK MODE
-========================= */
-const vidM = document.getElementById("vid_m");
-const target0 = document.getElementById("target0");
-const anchorM = document.getElementById("anchorM");
-let planeM = null;
+      sceneWebXR.renderer.xr.enabled = true;
+      await sceneWebXR.renderer.xr.setSession(xrSession);
 
-function applyTransformMindAR(){
-  if (!planeM) return;
-  planeM.object3D.scale.set(scale, scale, scale);
-  planeM.object3D.rotation.y = rotY;
-}
+      xrRefSpace = await xrSession.requestReferenceSpace("local");
+      viewerSpace = await xrSession.requestReferenceSpace("viewer");
+      hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
 
-async function startMindAR(){
-  currentMode = "mindar";
-  setMode("Compatibile iPhone (MindAR)");
-  setStatus("Avviando…");
+      setStatus("Tocca il tavolo per posizionare ✨");
+    } catch (e) {
+      console.warn("WebXR fail -> fallback MindAR", e);
+      startMindAR();
+      return;
+    }
 
-  sceneWebXR.classList.add("off");
-  sceneMindAR.classList.remove("off");
+    // loop hit-test
+    const onXRFrame = (t, frame) => {
+      if (!xrSession) return;
+      const hits = frame.getHitTestResults(hitTestSource);
+      if (hits.length) {
+        const pose = hits[0].getPose(xrRefSpace);
+        if (pose) {
+          lastHitPose = pose.transform;
+          const p = lastHitPose.position;
+          const o = lastHitPose.orientation;
+          reticle.object3D.position.set(p.x, p.y, p.z);
+          reticle.object3D.quaternion.set(o.x, o.y, o.z, o.w);
+          reticle.setAttribute("visible", true);
+        }
+      } else {
+        reticle.setAttribute("visible", false);
+      }
+      xrSession.requestAnimationFrame(onXRFrame);
+    };
+    xrSession.requestAnimationFrame(onXRFrame);
 
-  await unlockVideo(vidM);
+    // tap to place
+    const tapPlace = async () => {
+      if (placed) return;
+      if (!lastHitPose) return;
 
-  ui.style.display = "none";
-  controls.style.display = "flex";
-  placed = false;
-  scale = 1; rotY = 0;
-  audioBtn.style.display = "inline-block";
+      const p = lastHitPose.position;
+      const o = lastHitPose.orientation;
 
-  // start mindar
-  try {
-    await sceneMindAR.systems["mindar-image-system"].start();
-  } catch(e){
-    console.warn("MindAR start error", e);
+      anchorW.object3D.position.set(p.x, p.y, p.z);
+      anchorW.object3D.quaternion.set(o.x, o.y, o.z, o.w);
+      anchorW.setAttribute("visible", true);
+
+      placed = true;
+      setStatus("Posizionato ✅");
+
+      try { vidW.muted = true; await vidW.play(); } catch(e){}
+    };
+
+    sceneWebXR.canvas?.addEventListener("click", tapPlace, { passive:true });
+    sceneWebXR.canvas?.addEventListener("touchend", tapPlace, { passive:true });
+
+    // controls
+    biggerBtn.onclick = () => { scale = Math.min(2.2, scale + 0.1); applyTransformWebXR(); };
+    smallerBtn.onclick = () => { scale = Math.max(0.5, scale - 0.1); applyTransformWebXR(); };
+    rotLBtn.onclick = () => { rotY -= 0.15; applyTransformWebXR(); };
+    rotRBtn.onclick = () => { rotY += 0.15; applyTransformWebXR(); };
+
+    audioBtn.onclick = async () => {
+      try { vidW.muted = false; await vidW.play(); audioBtn.style.display = "none"; } catch(e){}
+    };
+
+    resetBtn.onclick = async () => {
+      placed = false;
+      lastHitPose = null;
+      anchorW.setAttribute("visible", "false");
+      reticle.setAttribute("visible", "false");
+      try { vidW.pause(); vidW.currentTime = 0; } catch(e){}
+      setStatus("Tocca il tavolo per posizionare ✨");
+      audioBtn.style.display = "inline-block";
+      scale = 1; rotY = 0; applyTransformWebXR();
+    };
   }
-  setStatus("Inquadra il prodotto ✨");
 
-  // Place button for fallback
-  let placeBtn = document.getElementById("placeBtnFallback");
-  if (!placeBtn){
-    placeBtn = document.createElement("button");
-    placeBtn.id = "placeBtnFallback";
-    placeBtn.className = "btn orange";
-    placeBtn.textContent = "Posiziona sul tavolo";
-    placeBtn.style.position = "fixed";
-    placeBtn.style.top = "64px";
-    placeBtn.style.left = "50%";
-    placeBtn.style.transform = "translateX(-50%)";
-    placeBtn.style.zIndex = "80";
-    placeBtn.style.display = "none";
-    document.body.appendChild(placeBtn);
+  // =========================
+  // MINDAR FALLBACK MODE
+  // =========================
+  function applyTransformMindAR(){
+    const p = anchorM.querySelector("a-plane");
+    if (!p) return;
+    p.object3D.scale.set(scale, scale, scale);
+    p.object3D.rotation.y = rotY;
   }
 
   function stopVideoM(){
     try { vidM.pause(); vidM.currentTime = 0; } catch(e){}
   }
 
-  // target found/lost
-  target0.addEventListener("targetFound", async () => {
-    if (placed) return;
-    setStatus("Trovato ✅ Premi Posiziona");
-    placeBtn.style.display = "inline-block";
-    try { vidM.muted = true; await vidM.play(); } catch(e){}
-  });
+  async function startMindAR(){
+    setMode("Compatibile iPhone (MindAR)");
+    setStatus("Avviando…");
 
-  target0.addEventListener("targetLost", () => {
-    if (!placed) {
-      setStatus("Inquadra il prodotto ✨");
-      placeBtn.style.display = "none";
-      stopVideoM();
-    }
-  });
+    sceneWebXR.classList.add("off");
+    sceneMindAR.classList.remove("off");
 
-  // place (freeze in space)
-  placeBtn.onclick = async () => {
-    if (placed) return;
-    placed = true;
-    placeBtn.style.display = "none";
-    setStatus("Posizionato ✅");
-
-    // build plane once
-    anchorM.setAttribute("visible", "true");
-    while (anchorM.firstChild) anchorM.removeChild(anchorM.firstChild);
-
-    planeM = document.createElement("a-plane");
-    planeM.setAttribute("width", "0.9");
-    planeM.setAttribute("height", "0.506");
-    planeM.setAttribute("material", "shader: flat; src: #vid_m");
-    planeM.setAttribute("position", "0 0.18 0");
-    planeM.setAttribute("rotation", "-15 0 0");
-    anchorM.appendChild(planeM);
-
-    // copy target pose at that moment
-    target0.object3D.updateMatrixWorld(true);
-    const m = target0.object3D.matrixWorld.clone();
-
-    const pos = new THREE.Vector3();
-    const quat = new THREE.Quaternion();
-    const scl = new THREE.Vector3();
-    m.decompose(pos, quat, scl);
-
-    anchorM.object3D.position.copy(pos);
-    anchorM.object3D.quaternion.copy(quat);
-    anchorM.object3D.scale.set(1,1,1);
-
-    try { vidM.muted = true; await vidM.play(); } catch(e){}
-  };
-
-  // controls
-  biggerBtn.onclick = () => { scale = Math.min(2.2, scale + 0.1); applyTransformMindAR(); };
-  smallerBtn.onclick = () => { scale = Math.max(0.5, scale - 0.1); applyTransformMindAR(); };
-  rotLBtn.onclick = () => { rotY -= 0.15; applyTransformMindAR(); };
-  rotRBtn.onclick = () => { rotY += 0.15; applyTransformMindAR(); };
-
-  audioBtn.onclick = async () => {
-    try { vidM.muted = false; await vidM.play(); audioBtn.style.display = "none"; } catch(e){}
-  };
-
-  resetBtn.onclick = () => {
-    placed = false;
-    setStatus("Inquadra il prodotto ✨");
+    ui.style.display = "none";
+    controls.style.display = "flex";
+    placed = false; scale = 1; rotY = 0;
     audioBtn.style.display = "inline-block";
     anchorM.setAttribute("visible", "false");
     while (anchorM.firstChild) anchorM.removeChild(anchorM.firstChild);
-    stopVideoM();
-    scale = 1; rotY = 0;
-  };
-}
+
+    await unlockVideo(vidM);
+
+    try {
+      await sceneMindAR.systems["mindar-image-system"].start();
+    } catch(e) {
+      console.warn("MindAR start error", e);
+    }
+    setStatus("Inquadra il prodotto ✨");
+
+    // place button fallback
+    let placeBtn = document.getElementById("placeBtnFallback");
+    if (!placeBtn){
+      placeBtn = document.createElement("button");
+      placeBtn.id = "placeBtnFallback";
+      placeBtn.className = "btn orange";
+      placeBtn.textContent = "Posiziona sul tavolo";
+      placeBtn.style.position = "fixed";
+      placeBtn.style.top = "64px";
+      placeBtn.style.left = "50%";
+      placeBtn.style.transform = "translateX(-50%)";
+      placeBtn.style.zIndex = "80";
+      placeBtn.style.display = "none";
+      document.body.appendChild(placeBtn);
+    }
+
+    target0.addEventListener("targetFound", async () => {
+      if (placed) return;
+      setStatus("Trovato ✅ Premi Posiziona");
+      placeBtn.style.display = "inline-block";
+      try { vidM.muted = true; await vidM.play(); } catch(e){}
+    });
+
+    target0.addEventListener("targetLost", () => {
+      if (!placed) {
+        placeBtn.style.display = "none";
+        setStatus("Inquadra il prodotto ✨");
+        stopVideoM();
+      }
+    });
+
+    placeBtn.onclick = async () => {
+      if (placed) return;
+      placed = true;
+      placeBtn.style.display = "none";
+      setStatus("Posizionato ✅");
+
+      anchorM.setAttribute("visible", "true");
+      while (anchorM.firstChild) anchorM.removeChild(anchorM.firstChild);
+
+      const plane = document.createElement("a-plane");
+      plane.setAttribute("width", "0.9");
+      plane.setAttribute("height", "0.506");
+      plane.setAttribute("material", "shader: flat; src: #vid_m");
+      plane.setAttribute("position", "0 0.18 0");
+      plane.setAttribute("rotation", "-15 0 0");
+      anchorM.appendChild(plane);
+
+      target0.object3D.updateMatrixWorld(true);
+      const m = target0.object3D.matrixWorld.clone();
+
+      const pos = new THREE.Vector3();
+      const quat = new THREE.Quaternion();
+      const scl = new THREE.Vector3();
+      m.decompose(pos, quat, scl);
+
+      anchorM.object3D.position.copy(pos);
+      anchorM.object3D.quaternion.copy(quat);
+      anchorM.object3D.scale.set(1,1,1);
+
+      try { vidM.muted = true; await vidM.play(); } catch(e){}
+    };
+
+    biggerBtn.onclick = () => { scale = Math.min(2.2, scale + 0.1); applyTransformMindAR(); };
+    smallerBtn.onclick = () => { scale = Math.max(0.5, scale - 0.1); applyTransformMindAR(); };
+    rotLBtn.onclick = () => { rotY -= 0.15; applyTransformMindAR(); };
+    rotRBtn.onclick = () => { rotY += 0.15; applyTransformMindAR(); };
+
+    audioBtn.onclick = async () => {
+      try { vidM.muted = false; await vidM.play(); audioBtn.style.display = "none"; } catch(e){}
+    };
+
+    resetBtn.onclick = () => {
+      placed = false;
+      anchorM.setAttribute("visible", "false");
+      while (anchorM.firstChild) anchorM.removeChild(anchorM.firstChild);
+      audioBtn.style.display = "inline-block";
+      setStatus("Inquadra il prodotto ✨");
+      stopVideoM();
+      scale = 1; rotY = 0;
+    };
+  }
 </script>
 
 </body>
