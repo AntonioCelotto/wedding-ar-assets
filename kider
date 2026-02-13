@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Kinder AR Experience – NDA</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial; }
+    body { background: #0d0f16; }
+
+    /* UI Kinder-like */
+    .overlay{
+      position:fixed; inset:0; z-index:20;
+      display:flex; align-items:center; justify-content:center;
+      padding:18px;
+      background:
+        radial-gradient(circle at 50% 25%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%),
+        linear-gradient(180deg, #0b2a7a 0%, #0d0f16 55%, #c9492f 120%);
+    }
+    .card{
+      width:min(560px, 100%);
+      background: rgba(255,255,255,.92);
+      border-radius: 22px;
+      padding: 18px;
+      text-align:center;
+      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.7);
+      backdrop-filter: blur(10px);
+    }
+    .title{ margin:2px 0 6px; font-size:20px; font-weight:900; color:#0b2a7a; }
+    .sub{ margin:0 0 14px; font-size:14px; line-height:1.4; color:rgba(0,0,0,.70); }
+
+    .row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .btn{
+      border:none; border-radius:999px;
+      padding:12px 18px;
+      font-weight:900; cursor:pointer;
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+    .btn.primary{ background:#0b2a7a; color:#fff; }
+    .btn.orange{ background:#c9492f; color:#fff; }
+    .btn.white{ background:#fff; color:#0b2a7a; border:1px solid rgba(11,42,122,.25); }
+
+    .pill{
+      position:fixed; top:10px; left:10px; right:10px;
+      display:flex; justify-content:space-between; gap:10px;
+      z-index:30; pointer-events:none;
+    }
+    .badge{
+      pointer-events:auto;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px; border-radius:999px;
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(255,255,255,.9);
+      color: rgba(0,0,0,.75);
+      font-size:13px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+    }
+    .badge strong{ color:#0b2a7a; font-weight:900; }
+    .hidden{ display:none !important; }
+
+    /* Bottom controls after placement */
+    .controls{
+      position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
+      z-index:40; display:none; gap:8px; flex-wrap:wrap; justify-content:center;
+      width:min(680px, 92vw);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="pill">
+  <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
+  <div class="badge hidden" id="hint">Inquadra il prodotto…</div>
+</div>
+
+<div class="overlay" id="ui">
+  <div class="card">
+    <div class="title">Kinder AR Experience</div>
+    <div class="sub">
+      Tocca <b>“Avvia”</b>, consenti la fotocamera e inquadra l’ovetto.<br/>
+      Quando lo riconosce, premi <b>“Posiziona sul tavolo”</b>.
+    </div>
+    <div class="row">
+      <button class="btn primary" id="startBtn">Avvia</button>
+      <button class="btn white" id="helpBtn">Come funziona</button>
+    </div>
+    <div class="sub" style="margin-top:10px;font-size:12.5px;">
+      Suggerimento: luce buona + oggetto fermo 1–2 secondi.
+    </div>
+  </div>
+</div>
+
+<!-- Bottom controls (after placement) -->
+<div class="controls" id="controls">
+  <button class="btn orange" id="audioBtn">Attiva audio</button>
+  <button class="btn white" id="biggerBtn">+</button>
+  <button class="btn white" id="smallerBtn">−</button>
+  <button class="btn white" id="rotLBtn">⟲</button>
+  <button class="btn white" id="rotRBtn">⟳</button>
+  <button class="btn white" id="resetBtn">Reset</button>
+</div>
+
+<a-scene
+  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+  embedded
+  vr-mode-ui="enabled:false"
+  device-orientation-permission-ui="enabled:false"
+>
+  <a-assets>
+    <video id="v1" crossorigin="anonymous"
+      src="https://video.wixstatic.com/video/047e10_52e17abd0ace4f278579d8554e2e40c3/480p/mp4/file.mp4"
+      preload="auto" playsinline webkit-playsinline muted></video>
+  </a-assets>
+
+  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+  <!-- Target 0 = Kinder -->
+  <a-entity id="target0" mindar-image-target="targetIndex: 0"></a-entity>
+
+  <!-- Anchor “sganciato” (resta sempre visibile) -->
+  <a-entity id="worldAnchor" visible="false"></a-entity>
+</a-scene>
+
+<script>
+  const ui = document.getElementById("ui");
+  const status = document.getElementById("status");
+  const hint = document.getElementById("hint");
+
+  const startBtn = document.getElementById("startBtn");
+  const helpBtn = document.getElementById("helpBtn");
+
+  const controls = document.getElementById("controls");
+  const audioBtn = document.getElementById("audioBtn");
+  const biggerBtn = document.getElementById("biggerBtn");
+  const smallerBtn = document.getElementById("smallerBtn");
+  const rotLBtn = document.getElementById("rotLBtn");
+  const rotRBtn = document.getElementById("rotRBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const scene = document.querySelector("a-scene");
+  const target0 = document.getElementById("target0");
+  const worldAnchor = document.getElementById("worldAnchor");
+  const video = document.getElementById("v1");
+
+  let placed = false;
+  let planeEl = null;
+  let rotY = 0;
+  let scale = 1;
+
+  function setStatus(t){ status.textContent = "AR " + t; }
+
+  function stopVideo(){
+    try { video.pause(); video.currentTime = 0; } catch(e){}
+  }
+
+  async function unlockVideo(){
+    try {
+      video.muted = true;
+      await video.play();
+      video.pause();
+      video.currentTime = 0;
+    } catch(e){}
+  }
+
+  helpBtn.addEventListener("click", () => {
+    alert("1) Avvia e consenti la fotocamera\n2) Inquadra l’ovetto\n3) Premi 'Posiziona sul tavolo'\n4) Il contenuto resta visibile");
+  });
+
+  startBtn.addEventListener("click", async () => {
+    await unlockVideo();
+    await scene.systems["mindar-image-system"].start();
+    ui.style.display = "none";
+    hint.classList.remove("hidden");
+    setStatus("Inquadra il prodotto ✨");
+  });
+
+  // Bottone "posiziona"
+  const placeBtn = document.createElement("button");
+  placeBtn.className = "btn orange";
+  placeBtn.textContent = "Posiziona sul tavolo";
+  placeBtn.style.position = "fixed";
+  placeBtn.style.top = "64px";
+  placeBtn.style.left = "50%";
+  placeBtn.style.transform = "translateX(-50%)";
+  placeBtn.style.zIndex = "40";
+  placeBtn.style.display = "none";
+  document.body.appendChild(placeBtn);
+
+  // Target found
+  target0.addEventListener("targetFound", async () => {
+    if (placed) return;
+    hint.classList.add("hidden");
+    setStatus("Trovato ✅ Premi Posiziona");
+    placeBtn.style.display = "inline-block";
+    try {
+      video.muted = true;
+      await video.play();
+    } catch(e){}
+  });
+
+  // Target lost (solo prima del posizionamento)
+  target0.addEventListener("targetLost", () => {
+    if (!placed) {
+      setStatus("Inquadra il prodotto ✨");
+      placeBtn.style.display = "none";
+      stopVideo();
+    }
+  });
+
+  // POSIZIONA: sgancia dal target e resta visibile
+  placeBtn.addEventListener("click", async () => {
+    if (placed) return;
+
+    placed = true;
+    placeBtn.style.display = "none";
+    controls.style.display = "flex";
+    setStatus("Posizionato ✅");
+
+    // Piano video (card) leggermente inclinato
+    planeEl = document.createElement("a-plane");
+    planeEl.setAttribute("width", "0.9");
+    planeEl.setAttribute("height", "0.506");
+    planeEl.setAttribute("material", "shader: flat; src: #v1");
+    planeEl.setAttribute("position", "0 0.18 0");
+    planeEl.setAttribute("rotation", "-15 0 0");
+    worldAnchor.appendChild(planeEl);
+
+    // Copia la posa del target (come punto iniziale “fermo”)
+    target0.object3D.updateMatrixWorld(true);
+    const m = target0.object3D.matrixWorld.clone();
+
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scl = new THREE.Vector3();
+    m.decompose(pos, quat, scl);
+
+    worldAnchor.object3D.position.copy(pos);
+    worldAnchor.object3D.quaternion.copy(quat);
+    worldAnchor.object3D.scale.set(1,1,1);
+    worldAnchor.setAttribute("visible", "true");
+
+    try {
+      video.muted = true;
+      await video.play();
+    } catch(e){}
+  });
+
+  // Audio
+  audioBtn.addEventListener("click", async () => {
+    if (!placed) return;
+    try {
+      video.muted = false;
+      await video.play();
+      audioBtn.style.display = "none";
+    } catch(e){}
+  });
+
+  // Transform helpers
+  function applyTransform(){
+    if (!planeEl) return;
+    planeEl.object3D.scale.set(scale, scale, scale);
+    planeEl.object3D.rotation.y = rotY;
+  }
+
+  biggerBtn.addEventListener("click", () => { scale = Math.min(2.2, scale + 0.1); applyTransform(); });
+  smallerBtn.addEventListener("click", () => { scale = Math.max(0.5, scale - 0.1); applyTransform(); });
+  rotLBtn.addEventListener("click", () => { rotY -= 0.15; applyTransform(); });
+  rotRBtn.addEventListener("click", () => { rotY += 0.15; applyTransform(); });
+
+  // Reset
+  resetBtn.addEventListener("click", () => {
+    placed = false;
+    controls.style.display = "none";
+    audioBtn.style.display = "inline-block";
+    setStatus("Inquadra il prodotto ✨");
+    hint.classList.remove("hidden");
+
+    worldAnchor.setAttribute("visible", "false");
+    while (worldAnchor.firstChild) worldAnchor.removeChild(worldAnchor.firstChild);
+
+    stopVideo();
+  });
+</script>
+
+</body>
+</html>
