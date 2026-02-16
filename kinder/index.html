@@ -126,9 +126,15 @@
 
   <!-- 1 SOLO TARGET -->
   <a-entity id="t0" mindar-image-target="targetIndex: 0">
-    <!-- piano video sopra al target -->
-    <a-plane width="1" height="0.5625" position="0 0 0"
-      material="shader: flat; src: #v1"></a-plane>
+    <!-- Wrapper (così puoi scalare tutto facilmente) -->
+    <a-entity id="videoWrap">
+      <!-- piano video sopra al target -->
+      <a-plane id="videoPlane"
+        width="1" height="0.5625"
+        position="0 0 0"
+        material="shader: flat; src: #v1">
+      </a-plane>
+    </a-entity>
   </a-entity>
 
 </a-scene>
@@ -144,6 +150,17 @@
   const scene = document.querySelector("a-scene");
   const target = document.getElementById("t0");
   const v1 = document.getElementById("v1");
+
+  // ✅ nuovo: riferimenti per zoom
+  const videoWrap = document.getElementById("videoWrap");
+
+  // ---- CONFIG ZOOM ----
+  // Scala “normale” (quando non inquadri)
+  const NORMAL_SCALE = { x: 1, y: 1, z: 1 };
+  // Scala “grande” (quando inquadri) -> aumenta qui per ingrandire di più
+  const TRACKED_SCALE = { x: 2.2, y: 2.2, z: 2.2 };
+  // Durata animazione (ms)
+  const ZOOM_MS = 220;
 
   function setStatus(text){ status.textContent = "AR " + text; }
 
@@ -161,6 +178,22 @@
     } catch(e){}
   }
 
+  // ✅ nuovo: helper per animare la scala
+  function animateScale(el, from, to, ms) {
+    // set immediato (evita glitch)
+    el.setAttribute("scale", `${from.x} ${from.y} ${from.z}`);
+    // animazione A-Frame
+    el.setAttribute("animation__scale", `
+      property: scale;
+      to: ${to.x} ${to.y} ${to.z};
+      dur: ${ms};
+      easing: easeOutQuad;
+    `);
+  }
+
+  // stato iniziale
+  videoWrap.setAttribute("scale", `${NORMAL_SCALE.x} ${NORMAL_SCALE.y} ${NORMAL_SCALE.z}`);
+
   helpBtn.addEventListener("click", () => {
     alert("1) Tocca 'Avvia esperienza'\n2) Consenti la fotocamera\n3) Inquadra il target Kinder");
   });
@@ -173,10 +206,14 @@
     page.classList.remove("hidden");
   });
 
-  // Quando trova il target: avvia video (muted), mostra tasto audio
+  // Quando trova il target: avvia video (muted), mostra tasto audio + ✅ zoom in
   target.addEventListener("targetFound", async () => {
     setStatus("Trovato ✅");
     page.textContent = "In riproduzione…";
+
+    // ✅ zoom in (video più grande)
+    animateScale(videoWrap, NORMAL_SCALE, TRACKED_SCALE, ZOOM_MS);
+
     stopVideo();
     try {
       v1.muted = true;
@@ -185,11 +222,15 @@
     } catch(e){}
   });
 
-  // Quando perde il target: stop video
+  // Quando perde il target: stop video + ✅ torna alla scala normale
   target.addEventListener("targetLost", () => {
     setStatus("Inquadra il Kinder ✨");
     page.textContent = "Inquadra il Kinder";
     audioBtn.style.display = "none";
+
+    // ✅ zoom out
+    animateScale(videoWrap, TRACKED_SCALE, NORMAL_SCALE, ZOOM_MS);
+
     stopVideo();
   });
 
