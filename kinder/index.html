@@ -12,7 +12,6 @@
     html, body { margin:0; width:100%; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial; }
     body { background:#0d0f16; }
 
-    /* Kinder style */
     .overlay {
       position: fixed; inset: 0;
       display:flex; align-items:center; justify-content:center;
@@ -67,7 +66,6 @@
     .badge strong { color:#0b2a7a; font-weight: 900; }
     .hidden { display:none !important; }
 
-    /* Audio button */
     .audioBtn {
       position: fixed;
       bottom: 14px;
@@ -122,21 +120,23 @@
       preload="auto" playsinline webkit-playsinline muted></video>
   </a-assets>
 
-  <!-- CAMERA -->
-  <a-camera id="cam" position="0 0 0" look-controls="enabled:false">
-    <!-- ✅ Video fissato alla camera: SINISTRA + SU + PIÙ VICINO -->
-    <a-entity id="fixedVideo" visible="false">
-      <a-plane id="fixedPlane"
-        width="1.25" height="0.703125"
-        position="-0.55 0.35 -1.15"
-        rotation="0 0 0"
+  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+  <!-- TARGET: qui l'oggetto è ANCORATO al target, ma lo facciamo "uscire" -->
+  <a-entity id="t0" mindar-image-target="targetIndex: 0">
+    <a-entity id="videoWrap"
+      position="0 0 0"
+      scale="0.001 0.001 0.001"
+      rotation="0 0 0"
+      visible="false">
+      <!-- NOTA: width/height più grandi del target = "fuori dal raggio" -->
+      <a-plane id="videoPlane"
+        width="2.2" height="1.2375"
+        position="0 0 0"
         material="shader: flat; src: #v1">
       </a-plane>
     </a-entity>
-  </a-camera>
-
-  <!-- TARGET solo per trigger -->
-  <a-entity id="t0" mindar-image-target="targetIndex: 0"></a-entity>
+  </a-entity>
 
 </a-scene>
 
@@ -152,8 +152,7 @@
   const target = document.getElementById("t0");
   const v1 = document.getElementById("v1");
 
-  const fixedVideo = document.getElementById("fixedVideo");
-  const fixedPlane = document.getElementById("fixedPlane");
+  const videoWrap = document.getElementById("videoWrap");
 
   function setStatus(text){ status.textContent = "AR " + text; }
 
@@ -162,7 +161,6 @@
   }
 
   async function unlockVideo() {
-    // Sblocca autoplay su mobile (gesture)
     try {
       v1.muted = true;
       await v1.play();
@@ -183,40 +181,54 @@
     page.classList.remove("hidden");
   });
 
-  function showFixedVideo() {
-    fixedVideo.setAttribute("visible", true);
+  // === CONFIG EFFETTO "POP OUT" ===
+  // Posizione finale: sinistra / su / "fuori" (verso camera)
+  // Se non esce verso camera: cambia Z da 0.18 a -0.18 (dipende dall'orientamento del target)
+  const FINAL_POS = { x: -0.45, y: 0.35, z: 0.18 };
+  const FINAL_SCALE = { x: 1, y: 1, z: 1 };
+  const DUR = 260;
 
-    // pop-in
-    fixedPlane.setAttribute("scale", "0.001 0.001 0.001");
-    fixedPlane.setAttribute("animation__in", `
+  function showPopOut() {
+    videoWrap.setAttribute("visible", true);
+
+    // reset iniziale
+    videoWrap.setAttribute("position", "0 0 0");
+    videoWrap.setAttribute("scale", "0.001 0.001 0.001");
+
+    // animazione: scala + movimento
+    videoWrap.setAttribute("animation__scalein", `
       property: scale;
-      to: 1 1 1;
-      dur: 220;
+      to: ${FINAL_SCALE.x} ${FINAL_SCALE.y} ${FINAL_SCALE.z};
+      dur: ${DUR};
+      easing: easeOutBack;
+    `);
+
+    videoWrap.setAttribute("animation__posin", `
+      property: position;
+      to: ${FINAL_POS.x} ${FINAL_POS.y} ${FINAL_POS.z};
+      dur: ${DUR};
       easing: easeOutQuad;
     `);
   }
 
-  function hideFixedVideo() {
-    // pop-out rapido, poi hide
-    fixedPlane.setAttribute("animation__out", `
+  function hidePopOut() {
+    videoWrap.setAttribute("animation__scaleout", `
       property: scale;
       to: 0.001 0.001 0.001;
-      dur: 140;
+      dur: 160;
       easing: easeInQuad;
     `);
 
     setTimeout(() => {
-      fixedVideo.setAttribute("visible", false);
-      fixedPlane.setAttribute("scale", "1 1 1");
-    }, 150);
+      videoWrap.setAttribute("visible", false);
+    }, 170);
   }
 
-  // Quando trova il target: avvia video (muted), mostra tasto audio + video fisso davanti alla camera
   target.addEventListener("targetFound", async () => {
     setStatus("Trovato ✅");
     page.textContent = "In riproduzione…";
 
-    showFixedVideo();
+    showPopOut();
 
     stopVideo();
     try {
@@ -226,17 +238,15 @@
     } catch(e){}
   });
 
-  // Quando perde il target: stop video e nascondi
   target.addEventListener("targetLost", () => {
     setStatus("Inquadra il Kinder ✨");
     page.textContent = "Inquadra il Kinder";
     audioBtn.style.display = "none";
 
-    hideFixedVideo();
+    hidePopOut();
     stopVideo();
   });
 
-  // Attiva audio (solo con click)
   audioBtn.addEventListener("click", async () => {
     try {
       v1.muted = false;
