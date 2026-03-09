@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AR Taste – Urban Fire (Standalone)</title>
+  <title>MENU IN AR – Standalone</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -78,7 +78,7 @@
 
 <div class="overlay" id="ui">
   <div class="card">
-    <div class="title">AR Taste – Urban Fire</div>
+    <div class="title">MENU IN AR</div>
     <div class="sub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra la pagina AR.</div>
     <div class="row">
       <button class="btn primary" id="startBtn">Avvia esperienza</button>
@@ -91,18 +91,18 @@
 </div>
 
 <a-scene
-  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+  mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no;"
   embedded
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <!-- PAGINA 1: CHEF -->
+    <!-- TARGET 0: COPERTINA (CHEF) -->
     <video id="v1" crossorigin="anonymous"
       src="https://video.wixstatic.com/video/047e10_dd971dc9e3634cc4b4e0871af681ecc6/720p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
 
-    <!-- PAGINA 2: MENU -->
+    <!-- TARGET 1: PAGINA MENU (PIATTO CHE GIRA) -->
     <video id="v2" crossorigin="anonymous"
       src="https://video.wixstatic.com/video/047e10_e96865f9d61b400f86cb7da023625588/720p/mp4/file.mp4"
       preload="auto" playsinline webkit-playsinline muted></video>
@@ -110,14 +110,18 @@
 
   <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-  <!-- targetIndex 0 = immagine CHEF -->
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-plane width="1" height="1" material="shader: flat; src: #v1"></a-plane>
+  <!-- targetIndex 0 = COPERTINA MENU IN AR -->
+  <a-entity mindar-image-target="targetIndex: 0" data-idx="0">
+    <!-- 16:9 -->
+    <a-plane width="1.2" height="0.675" position="0 0 0"
+      material="shader: flat; src: #v1"></a-plane>
   </a-entity>
 
-  <!-- targetIndex 1 = immagine MENU -->
-  <a-entity mindar-image-target="targetIndex: 1">
-    <a-plane width="1" height="1" material="shader: flat; src: #v2"></a-plane>
+  <!-- targetIndex 1 = PAGINA MENU (ANTIPASTI/PRIMI/...) -->
+  <a-entity mindar-image-target="targetIndex: 1" data-idx="1">
+    <!-- 16:9 -->
+    <a-plane width="1.2" height="0.675" position="0 0 0"
+      material="shader: flat; src: #v2"></a-plane>
   </a-entity>
 
 </a-scene>
@@ -128,13 +132,13 @@
   const helpBtn = document.getElementById("helpBtn");
   const status = document.getElementById("status");
   const page = document.getElementById("page");
-
   const scene = document.querySelector("a-scene");
 
-  const vids = [
-    { el: document.getElementById("v1"), name: "Lo Chef presenta Urban Fire" },
-    { el: document.getElementById("v2"), name: "Il Menu prende vita" }
-  ];
+  // Mappa targetIndex -> video + nome pagina
+  const targets = {
+    0: { videoId: "v1", name: "Lo Chef presenta" },
+    1: { videoId: "v2", name: "Il piatto in AR" }
+  };
 
   let activeIdx = null;
 
@@ -145,19 +149,22 @@
   }
   function hidePage(){ page.classList.add("hidden"); page.textContent = "Pagina: —"; }
 
-  function stopAll(){
-    vids.forEach(v => {
-      try { v.el.pause(); v.el.currentTime = 0; } catch(e){}
+  function stopAllVideos(){
+    Object.values(targets).forEach(t => {
+      const v = document.getElementById(t.videoId);
+      try { v.pause(); v.currentTime = 0; } catch(e){}
     });
   }
 
   async function unlockVideos() {
-    for (const v of vids) {
+    // iOS richiede un gesto utente: facciamo play/pause per “sbloccare”
+    for (const t of Object.values(targets)) {
+      const v = document.getElementById(t.videoId);
       try {
-        v.el.muted = true;
-        await v.el.play();
-        v.el.pause();
-        v.el.currentTime = 0;
+        v.muted = true;
+        await v.play();
+        v.pause();
+        v.currentTime = 0;
       } catch(e){}
     }
   }
@@ -176,7 +183,8 @@
 
   audioBtn.addEventListener("click", async () => {
     if (activeIdx === null) return;
-    const v = vids[activeIdx].el;
+    const t = targets[activeIdx];
+    const v = document.getElementById(t.videoId);
     try {
       v.muted = false;
       await v.play();
@@ -188,7 +196,7 @@
     alert(
       "1) Tocca 'Avvia esperienza'\\n" +
       "2) Consenti la fotocamera\\n" +
-      "3) Inquadra la pagina Chef o Menu"
+      "3) Inquadra la COPERTINA (chef) o la PAGINA MENU (piatto)"
     );
   });
 
@@ -199,12 +207,18 @@
     setStatus("Inquadra una pagina ✨");
   });
 
-  document.querySelectorAll("[mindar-image-target]").forEach((el, i) => {
+  document.querySelectorAll("[mindar-image-target]").forEach((el) => {
+    const idx = Number(el.dataset.idx); // <-- questo è il vero targetIndex che vogliamo usare
+
     el.addEventListener("targetFound", async () => {
-      activeIdx = i;
-      showPage(vids[i].name);
-      stopAll();
-      const v = vids[i].el;
+      activeIdx = idx;
+      const t = targets[idx];
+      if (!t) return;
+
+      showPage(t.name);
+      stopAllVideos();
+
+      const v = document.getElementById(t.videoId);
       try {
         v.muted = true;
         await v.play();
@@ -213,11 +227,11 @@
     });
 
     el.addEventListener("targetLost", () => {
-      if (activeIdx === i) {
+      if (activeIdx === idx) {
         activeIdx = null;
         hidePage();
         audioBtn.style.display = "none";
-        stopAll();
+        stopAllVideos();
       }
     });
   });
