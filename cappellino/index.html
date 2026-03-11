@@ -18,6 +18,18 @@
       background: #0d0f16;
     }
 
+    a-scene {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    canvas.a-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
     .overlay {
       position: fixed;
       inset: 0;
@@ -246,7 +258,7 @@
             const img = new Image();
             img.onload = () => resolve({ ...def, img });
             img.onerror = () => reject(new Error("Errore caricamento " + def.src));
-            img.src = def.src;
+            img.src = def.src + "?v=1";
           });
         })
       );
