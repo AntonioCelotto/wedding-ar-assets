@@ -42,7 +42,6 @@
       padding: 18px;
       text-align: center;
       box-shadow: 0 18px 55px rgba(0,0,0,.35);
-      backdrop-filter: blur(10px);
     }
 
     .title {
@@ -109,13 +108,7 @@
       border: 1px solid rgba(255,255,255,.92);
       color: rgba(0,0,0,.78);
       font-size: 13px;
-      backdrop-filter: blur(10px);
       box-shadow: 0 12px 30px rgba(0,0,0,.18);
-    }
-
-    .badge strong {
-      color: #111827;
-      font-weight: 900;
     }
 
     .hidden {
@@ -144,7 +137,7 @@
 <body>
 
   <div class="pill">
-    <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
+    <div class="badge" id="status">AR Pronto ✨</div>
     <div class="badge hidden" id="page">Inquadra il cappellino</div>
   </div>
 
@@ -167,7 +160,7 @@
   <button class="audioBtn" id="audioBtn">Attiva audio</button>
 
   <a-scene
-    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no;"
     embedded
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights"
@@ -177,32 +170,28 @@
     <a-assets>
       <video
         id="v1"
+        src="./assets/avatar/video-alpha-audio.webm"
         crossorigin="anonymous"
         preload="auto"
         playsinline
         webkit-playsinline
         muted
         loop
-      >
-        <source src="./assets/avatar/video-alpha-audio.webm" type="video/webm">
-        <source src="./assets/avatar/video-alpha-audio.mov" type="video/quicktime">
-      </video>
+      ></video>
     </a-assets>
 
-    <a-camera id="cam" position="0 0 0" look-controls="enabled:false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <!-- Target 0: cappellino -->
     <a-entity id="t0" mindar-image-target="targetIndex: 0">
       <a-plane
         id="videoPlane"
         position="0 0 0"
         width="1"
         height="1"
-        material="shader: flat; src: #v1; transparent: true"
         visible="false"
+        material="shader: flat; src: #v1; transparent: true"
       ></a-plane>
     </a-entity>
-
   </a-scene>
 
   <script>
@@ -229,15 +218,9 @@
       try {
         v1.pause();
         v1.currentTime = 0;
-      } catch (e) {}
-    }
-
-    function hideVideo() {
-      videoPlane.setAttribute("visible", false);
-    }
-
-    function showVideo() {
-      videoPlane.setAttribute("visible", true);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     async function unlockVideo() {
@@ -246,40 +229,44 @@
         await v1.play();
         v1.pause();
         v1.currentTime = 0;
-      } catch (e) {}
+      } catch (e) {
+        console.error("unlockVideo:", e);
+      }
     }
 
     helpBtn.addEventListener("click", () => {
-      alert("1) Tocca 'Avvia esperienza'\n2) Consenti la fotocamera\n3) Inquadra il cappellino target\n4) Quando compare il video, tocca 'Attiva audio'");
+      alert("1) Tocca 'Avvia esperienza'\\n2) Consenti la fotocamera\\n3) Inquadra il cappellino target\\n4) Tocca 'Attiva audio' se compare");
     });
 
     startBtn.addEventListener("click", async () => {
-      await unlockVideo();
-      await scene.systems["mindar-image-system"].start();
-      ui.style.display = "none";
-      setStatus("Inquadra il cappellino ✨");
-      page.classList.remove("hidden");
-      page.textContent = "Inquadra il cappellino";
+      try {
+        await unlockVideo();
+        await scene.systems["mindar-image-system"].start();
+        ui.style.display = "none";
+        setStatus("Inquadra il cappellino ✨");
+        page.classList.remove("hidden");
+        page.textContent = "Inquadra il cappellino";
+      } catch (e) {
+        console.error("Errore avvio AR:", e);
+        alert("AR non avviata. Controlla che targets.mind sia nella cartella cappellino e che la pagina sia aperta da GitHub Pages.");
+      }
     });
 
     target.addEventListener("targetFound", async () => {
       targetVisible = true;
       setStatus("Trovato ✅");
       page.textContent = "In riproduzione…";
-
-      showVideo();
-      stopVideo();
+      videoPlane.setAttribute("visible", true);
 
       try {
         v1.currentTime = 0;
         v1.muted = !audioUnlocked;
         await v1.play();
+        if (!audioUnlocked) {
+          audioBtn.style.display = "inline-block";
+        }
       } catch (e) {
-        console.error("Errore play video:", e);
-      }
-
-      if (!audioUnlocked) {
-        audioBtn.style.display = "inline-block";
+        console.error("Errore play:", e);
       }
     });
 
@@ -288,7 +275,7 @@
       setStatus("Inquadra il cappellino ✨");
       page.textContent = "Inquadra il cappellino";
       audioBtn.style.display = "none";
-      hideVideo();
+      videoPlane.setAttribute("visible", false);
       stopVideo();
     });
 
@@ -301,7 +288,7 @@
         await v1.play();
         audioBtn.style.display = "none";
       } catch (e) {
-        console.error("Errore attivazione audio:", e);
+        console.error("Errore audio:", e);
       }
     });
   </script>
