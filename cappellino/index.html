@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Cappellino AR – NDA</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -14,20 +14,11 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background: #0d0f16;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
     }
 
-    a-scene {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-    }
-
-    canvas.a-canvas {
-      width: 100vw !important;
-      height: 100vh !important;
+    body {
+      background: linear-gradient(#ffd6e3, #f7b2c7);
     }
 
     .overlay {
@@ -39,31 +30,32 @@
       z-index: 20;
       padding: 18px;
       background:
-        radial-gradient(circle at 50% 25%, rgba(255,255,255,.16), rgba(255,255,255,0) 55%),
-        linear-gradient(180deg, #111827 0%, #0d0f16 55%, #1f2937 120%);
+        radial-gradient(circle at 50% 25%, rgba(255,255,255,.35), rgba(255,255,255,0) 55%),
+        linear-gradient(#ffd6e3, #f7b2c7);
     }
 
     .card {
-      width: min(560px, 100%);
-      background: rgba(255,255,255,.94);
-      border: 1px solid rgba(255,255,255,.70);
+      width: min(520px, 100%);
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(255,255,255,.6);
       border-radius: 22px;
       padding: 18px;
       text-align: center;
-      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
     }
 
     .title {
       margin: 2px 0 6px;
       font-size: 20px;
-      font-weight: 900;
-      color: #111827;
+      font-weight: 800;
+      color: #2b1220;
     }
 
     .sub {
       margin: 0 0 12px;
       font-size: 14px;
-      color: rgba(0,0,0,.72);
+      color: rgba(43,18,32,.75);
       line-height: 1.4;
     }
 
@@ -78,20 +70,16 @@
       border: none;
       border-radius: 999px;
       padding: 12px 18px;
-      font-weight: 900;
+      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      background: rgba(255,255,255,.95);
+      color: #2b1220;
+      box-shadow: 0 10px 24px rgba(0,0,0,.12);
     }
 
     .btn.primary {
-      background: #111827;
+      background: #ff4d88;
       color: white;
-    }
-
-    .btn.white {
-      background: #ffffff;
-      color: #111827;
-      border: 1px solid rgba(17,24,39,.18);
     }
 
     .pill {
@@ -113,322 +101,148 @@
       gap: 8px;
       padding: 10px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,.78);
-      border: 1px solid rgba(255,255,255,.92);
-      color: rgba(0,0,0,.78);
+      background: rgba(255,255,255,.55);
+      border: 1px solid rgba(255,255,255,.8);
+      color: rgba(43,18,32,.85);
       font-size: 13px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    .audioBtn {
-      position: fixed;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 40;
-      display: none;
-      background: #111827;
-      color: #fff;
-      border: none;
-      border-radius: 999px;
-      padding: 12px 18px;
-      font-weight: 900;
-      box-shadow: 0 12px 30px rgba(0,0,0,.25);
-      cursor: pointer;
-    }
-
-    #animCanvas {
-      display: none;
-    }
+    .badge strong { font-weight: 900; }
+    .hidden { display: none !important; }
   </style>
 </head>
 
 <body>
 
-  <div class="pill">
-    <div class="badge" id="status">AR Pronto ✨</div>
-    <div class="badge hidden" id="page">Inquadra il cappellino</div>
-  </div>
+<div class="pill">
+  <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
+  <div class="badge hidden" id="page">Target: cappellino</div>
+</div>
 
-  <div class="overlay" id="ui">
-    <div class="card">
-      <div class="title">Cappellino AR Experience</div>
-      <div class="sub">
-        Tocca “Avvia esperienza”, consenti la fotocamera e inquadra il cappellino target.
-      </div>
-      <div class="row">
-        <button class="btn primary" id="startBtn">Avvia esperienza</button>
-        <button class="btn white" id="helpBtn">Come funziona</button>
-      </div>
-      <div class="sub" style="margin-top:10px;font-size:12.5px;">
-        Consiglio: luce buona + target fermo 1–2 secondi
-      </div>
+<div class="overlay" id="ui">
+  <div class="card">
+    <div class="title">Cappellino AR Experience</div>
+    <div class="sub">
+      Tocca “Avvia esperienza”, consenti la fotocamera e inquadra il cappellino.
+    </div>
+    <div class="row">
+      <button class="btn primary" id="startBtn">Avvia esperienza</button>
+      <button class="btn" id="helpBtn">Come funziona</button>
+    </div>
+    <div class="sub" style="margin-top:10px;font-size:12.5px;">
+      Consiglio: luce buona + cappellino fermo per 1–2 secondi
     </div>
   </div>
+</div>
 
-  <button class="audioBtn" id="audioBtn">Attiva audio</button>
+<a-scene
+  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+  embedded
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
 
-  <audio id="a1" preload="auto" playsinline>
-    <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
-  </audio>
+  <a-assets>
+    <img id="spriteStatic" src="./assets/avatar/sprite_1.png" crossorigin="anonymous">
 
-  <canvas id="animCanvas" width="512" height="288"></canvas>
+    <audio id="audio1" crossorigin="anonymous" preload="auto">
+      <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
+    </audio>
+  </a-assets>
 
-  <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no;"
-    embedded
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights"
-    vr-mode-ui="enabled:false"
-    device-orientation-permission-ui="enabled:false"
-  >
-    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <a-entity id="t0" mindar-image-target="targetIndex: 0">
-      <a-plane
-        id="videoPlane"
-        position="0 0 0"
-        width="1.2"
-        height="0.675"
-        visible="false"
-        material="shader: flat; src: #animCanvas; transparent: true; alphaTest: 0.01"
-      ></a-plane>
-    </a-entity>
-  </a-scene>
+  <a-entity id="target0" mindar-image-target="targetIndex: 0">
+    <a-plane
+      id="plane0"
+      width="1.0"
+      height="1.0"
+      visible="false"
+      material="shader: flat; src: #spriteStatic; transparent: true; alphaTest: 0.01">
+    </a-plane>
+  </a-entity>
 
-  <script>
-    const ui = document.getElementById("ui");
-    const startBtn = document.getElementById("startBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const status = document.getElementById("status");
-    const page = document.getElementById("page");
-    const audioBtn = document.getElementById("audioBtn");
+</a-scene>
 
-    const scene = document.querySelector("a-scene");
-    const target = document.getElementById("t0");
-    const plane = document.getElementById("videoPlane");
-    const audio = document.getElementById("a1");
+<script>
+  const ui = document.getElementById("ui");
+  const startBtn = document.getElementById("startBtn");
+  const helpBtn = document.getElementById("helpBtn");
+  const status = document.getElementById("status");
+  const page = document.getElementById("page");
+  const scene = document.querySelector("a-scene");
 
-    const canvas = document.getElementById("animCanvas");
-    const ctx = canvas.getContext("2d", { alpha: true });
+  const target0 = document.getElementById("target0");
+  const plane0 = document.getElementById("plane0");
+  const audio1 = document.getElementById("audio1");
 
-    const FPS = 25;
-    const FRAME_W = 512;
-    const FRAME_H = 288;
-    const COLS = 8;
-    const TOTAL_FRAMES = 602;
+  function setStatus(text) {
+    status.textContent = "AR " + text;
+  }
 
-    const spriteDefs = [
-      { src: "./assets/avatar/sprite_1.png", start: 0,   count: 64 },
-      { src: "./assets/avatar/sprite_2.png", start: 64,  count: 64 },
-      { src: "./assets/avatar/sprite_3.png", start: 128, count: 64 },
-      { src: "./assets/avatar/sprite_4.png", start: 192, count: 64 },
-      { src: "./assets/avatar/sprite_5.png", start: 256, count: 64 },
-      { src: "./assets/avatar/sprite_6.png", start: 320, count: 64 },
-      { src: "./assets/avatar/sprite_7.png", start: 384, count: 64 },
-      { src: "./assets/avatar/sprite_8.png", start: 448, count: 64 },
-      { src: "./assets/avatar/sprite_9.png", start: 512, count: 64 },
-      { src: "./assets/avatar/sprite_10.png", start: 576, count: 26 }
-    ];
+  function stopAudio() {
+    try {
+      audio1.pause();
+      audio1.currentTime = 0;
+    } catch (e) {}
+  }
 
-    let spritesLoaded = false;
-    let sprites = [];
-    let targetVisible = false;
-    let animationRunning = false;
-    let rafId = null;
-    let startTime = 0;
-    let audioStarted = false;
+  async function unlockAudio() {
+    try {
+      await audio1.play();
+      audio1.pause();
+      audio1.currentTime = 0;
+    } catch (e) {}
+  }
 
-    function setStatus(text) {
-      status.textContent = "AR " + text;
-    }
+  const audioBtn = document.createElement("button");
+  audioBtn.className = "btn";
+  audioBtn.textContent = "Attiva audio";
+  audioBtn.style.position = "fixed";
+  audioBtn.style.bottom = "14px";
+  audioBtn.style.left = "50%";
+  audioBtn.style.transform = "translateX(-50%)";
+  audioBtn.style.zIndex = "40";
+  audioBtn.style.display = "none";
+  document.body.appendChild(audioBtn);
 
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    async function loadSpritesOnce() {
-      if (spritesLoaded) return;
-
-      setStatus("Carico animazione...");
-      page.classList.remove("hidden");
-      page.textContent = "Carico animazione...";
-
-      sprites = await Promise.all(
-        spriteDefs.map(def => {
-          return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve({ ...def, img });
-            img.onerror = () => reject(new Error("Errore caricamento " + def.src));
-            img.src = def.src + "?v=2";
-          });
-        })
-      );
-
-      spritesLoaded = true;
-    }
-
-    function getSpriteForFrame(frameIndex) {
-      for (const s of sprites) {
-        if (frameIndex >= s.start && frameIndex < s.start + s.count) {
-          return s;
-        }
-      }
-      return sprites[0];
-    }
-
-    function drawFrame(frameIndex) {
-      if (!spritesLoaded) return;
-
-      if (frameIndex < 0) frameIndex = 0;
-      if (frameIndex >= TOTAL_FRAMES) frameIndex = TOTAL_FRAMES - 1;
-
-      const sprite = getSpriteForFrame(frameIndex);
-      const localIndex = frameIndex - sprite.start;
-      const col = localIndex % COLS;
-      const row = Math.floor(localIndex / COLS);
-
-      const sx = col * FRAME_W;
-      const sy = row * FRAME_H;
-
-      clearCanvas();
-      ctx.drawImage(
-        sprite.img,
-        sx, sy, FRAME_W, FRAME_H,
-        0, 0, canvas.width, canvas.height
-      );
-    }
-
-    function getCurrentFrameIndex() {
-      if (audioStarted && !audio.paused) {
-        return Math.floor(audio.currentTime * FPS);
-      }
-      const elapsed = (performance.now() - startTime) / 1000;
-      return Math.floor(elapsed * FPS);
-    }
-
-    function renderLoop() {
-      if (!animationRunning) return;
-
-      let frameIndex = getCurrentFrameIndex();
-
-      if (frameIndex >= TOTAL_FRAMES) {
-        frameIndex = TOTAL_FRAMES - 1;
-        drawFrame(frameIndex);
-        stopPlayback(false);
-        return;
-      }
-
-      drawFrame(frameIndex);
-      rafId = requestAnimationFrame(renderLoop);
-    }
-
-    function stopPlayback(resetAudio = true) {
-      animationRunning = false;
-      audioStarted = false;
-
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-
-      if (resetAudio) {
-        try {
-          audio.pause();
-          audio.currentTime = 0;
-        } catch (e) {}
-      }
-    }
-
-    function startAnimationOnly() {
-      stopPlayback(false);
-      startTime = performance.now();
-      animationRunning = true;
-      drawFrame(0);
-      rafId = requestAnimationFrame(renderLoop);
-    }
-
-    async function startAudioAndAnimation() {
-      stopPlayback(false);
-
-      try {
-        audio.currentTime = 0;
-        await audio.play();
-        audioStarted = true;
-        animationRunning = true;
-        drawFrame(0);
-        rafId = requestAnimationFrame(renderLoop);
-        audioBtn.style.display = "none";
-      } catch (e) {
-        console.error("Errore play audio:", e);
-        audioStarted = false;
-        startAnimationOnly();
-        audioBtn.style.display = "inline-block";
-      }
-    }
-
-    helpBtn.addEventListener("click", () => {
-      alert("1) Tocca 'Avvia esperienza'\\n2) Consenti la fotocamera\\n3) Inquadra il cappellino target\\n4) Se compare il pulsante, tocca 'Attiva audio'");
-    });
-
-    startBtn.addEventListener("click", async () => {
-      try {
-        setStatus("Avvio camera...");
-        await scene.systems["mindar-image-system"].start();
-
-        ui.style.display = "none";
-        setStatus("Inquadra il cappellino ✨");
-        page.classList.remove("hidden");
-        page.textContent = "Inquadra il cappellino";
-      } catch (e) {
-        console.error("Errore avvio AR:", e);
-        alert("AR non avviata. Controlla targets.mind e i permessi fotocamera.");
-      }
-    });
-
-    target.addEventListener("targetFound", async () => {
-      try {
-        targetVisible = true;
-        plane.setAttribute("visible", true);
-        setStatus("Trovato ✅");
-
-        await loadSpritesOnce();
-
-        page.textContent = "In riproduzione…";
-        drawFrame(0);
-        await startAudioAndAnimation();
-      } catch (e) {
-        console.error("Errore targetFound:", e);
-        setStatus("Errore asset");
-        page.textContent = "Errore caricamento sprite";
-      }
-    });
-
-    target.addEventListener("targetLost", () => {
-      targetVisible = false;
-      plane.setAttribute("visible", false);
-      setStatus("Inquadra il cappellino ✨");
-      page.textContent = "Inquadra il cappellino";
+  audioBtn.addEventListener("click", async () => {
+    try {
+      audio1.currentTime = 0;
+      await audio1.play();
       audioBtn.style.display = "none";
-      stopPlayback(true);
-      clearCanvas();
-    });
+    } catch (e) {}
+  });
 
-    audioBtn.addEventListener("click", async () => {
-      if (!targetVisible) return;
-      await startAudioAndAnimation();
-    });
+  helpBtn.addEventListener("click", () => {
+    alert("1) Tocca 'Avvia esperienza'\n2) Consenti la fotocamera\n3) Inquadra il cappellino");
+  });
 
-    audio.addEventListener("ended", () => {
-      stopPlayback(false);
-      drawFrame(TOTAL_FRAMES - 1);
-      audioBtn.style.display = "none";
-    });
-  </script>
+  startBtn.addEventListener("click", async () => {
+    await unlockAudio();
+    await scene.systems["mindar-image-system"].start();
+    ui.style.display = "none";
+    page.classList.remove("hidden");
+    page.textContent = "Target: cappellino";
+    setStatus("Inquadra il cappellino ✨");
+  });
+
+  target0.addEventListener("targetFound", async () => {
+    plane0.setAttribute("visible", true);
+    setStatus("Trovato ✅");
+    page.textContent = "In riproduzione…";
+    audioBtn.style.display = "inline-block";
+  });
+
+  target0.addEventListener("targetLost", () => {
+    plane0.setAttribute("visible", false);
+    setStatus("Inquadra il cappellino ✨");
+    page.textContent = "Target: cappellino";
+    audioBtn.style.display = "none";
+    stopAudio();
+  });
+</script>
 
 </body>
 </html>
