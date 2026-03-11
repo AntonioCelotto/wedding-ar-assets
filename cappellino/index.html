@@ -199,8 +199,6 @@
   const TILE_W = 512;
   const TILE_H = 288;
   const COLS = 8;
-  const FPS = 25;
-  const TOTAL_FRAMES = 602;
 
   const spriteDefs = [
     { src: "./assets/avatar/sprite_1.png",  start: 0,   count: 64 },
@@ -219,7 +217,6 @@
   let spritesLoaded = false;
   let animTimer = null;
   let arStarted = false;
-  let targetVisible = false;
 
   function setStatus(text) {
     status.textContent = "AR " + text;
@@ -262,7 +259,7 @@
         const img = new Image();
         img.onload = () => resolve({ ...def, img });
         img.onerror = () => reject(new Error("Errore caricamento " + def.src));
-        img.src = def.src + "?v=7";
+        img.src = def.src + "?v=8";
       }))
     );
 
@@ -281,9 +278,6 @@
   function drawFrame(frameIndex) {
     if (!spritesLoaded) return;
 
-    if (frameIndex < 0) frameIndex = 0;
-    if (frameIndex >= TOTAL_FRAMES) frameIndex = TOTAL_FRAMES - 1;
-
     const sprite = getSpriteForFrame(frameIndex);
     const localIndex = frameIndex - sprite.start;
 
@@ -292,6 +286,8 @@
 
     const sx = col * TILE_W;
     const sy = row * TILE_H;
+
+    console.log("frame:", frameIndex, "sprite start:", sprite.start);
 
     ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
     ctx.drawImage(
@@ -313,19 +309,20 @@
   function startAnimation() {
     stopAnimation();
 
-    let frame = 0;
-    drawFrame(frame);
+    const testFrames = [0, 20, 40, 63, 64, 84, 104, 127, 128, 148, 168, 191];
+    let idx = 0;
+
+    drawFrame(testFrames[idx]);
+    page.textContent = "Frame test: " + testFrames[idx];
 
     animTimer = setInterval(() => {
-      frame++;
-      if (frame >= TOTAL_FRAMES) {
-        frame = TOTAL_FRAMES - 1;
-        drawFrame(frame);
-        stopAnimation();
-        return;
+      idx++;
+      if (idx >= testFrames.length) {
+        idx = 0;
       }
-      drawFrame(frame);
-    }, 1000 / FPS);
+      drawFrame(testFrames[idx]);
+      page.textContent = "Frame test: " + testFrames[idx];
+    }, 800);
   }
 
   helpBtn.addEventListener("click", () => {
@@ -350,16 +347,11 @@
 
   target0.addEventListener("targetFound", async () => {
     try {
-      targetVisible = true;
-
       plane0.setAttribute("visible", true);
       setStatus("Trovato ✅");
       page.textContent = "Carico animazione...";
 
       await loadSpritesOnce();
-
-      drawFrame(0);
-      page.textContent = "In riproduzione…";
 
       startAnimation();
 
@@ -379,7 +371,6 @@
   });
 
   target0.addEventListener("targetLost", () => {
-    targetVisible = false;
     plane0.setAttribute("visible", false);
     setStatus("Inquadra il cappellino ✨");
     page.textContent = "Target: cappellino";
@@ -387,10 +378,6 @@
     stopAudio();
     ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
     refreshTexture();
-  });
-
-  audio1.addEventListener("ended", () => {
-    stopAnimation();
   });
 </script>
 
