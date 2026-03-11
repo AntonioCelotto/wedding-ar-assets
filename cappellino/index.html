@@ -229,8 +229,8 @@
   let spritesLoaded = false;
   let arStarted = false;
   let targetVisible = false;
-  let animationRunning = false;
-  let rafId = null;
+  let animationInterval = null;
+  let currentFrame = 0;
 
   function setStatus(text) {
     status.textContent = "AR " + text;
@@ -238,6 +238,17 @@
 
   function clearCanvas() {
     ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
+  }
+
+  function forceTextureRefresh() {
+    const materialComponent = plane0.components.material;
+    if (
+      materialComponent &&
+      materialComponent.material &&
+      materialComponent.material.map
+    ) {
+      materialComponent.material.map.needsUpdate = true;
+    }
   }
 
   async function unlockAudio() {
@@ -270,7 +281,7 @@
         const img = new Image();
         img.onload = () => resolve({ ...def, img });
         img.onerror = () => reject(new Error("Errore caricamento " + def.src));
-        img.src = def.src + "?v=3";
+        img.src = def.src + "?v=4";
       }))
     );
 
@@ -307,49 +318,49 @@
       sx, sy, CROP_W, CROP_H,
       0, 0, frameCanvas.width, frameCanvas.height
     );
+
+    forceTextureRefresh();
   }
 
-  function startAnimationLoop() {
-    stopAnimationLoop();
-
-    animationRunning = true;
-
-    const render = () => {
-      if (!animationRunning) return;
-
-      let frameIndex = Math.floor(audio1.currentTime * FPS);
-      if (frameIndex >= TOTAL_FRAMES) {
-        frameIndex = TOTAL_FRAMES - 1;
-      }
-
-      drawFrame(frameIndex);
-
-      if (!audio1.paused && !audio1.ended) {
-        rafId = requestAnimationFrame(render);
-      }
-    };
-
-    rafId = requestAnimationFrame(render);
-  }
-
-  function stopAnimationLoop() {
-    animationRunning = false;
-    if (rafId) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
+  function stopAnimation() {
+    if (animationInterval) {
+      clearInterval(animationInterval);
+      animationInterval = null;
     }
   }
 
+  function startAnimation() {
+    stopAnimation();
+    currentFrame = 0;
+    drawFrame(currentFrame);
+
+    animationInterval = setInterval(() => {
+      currentFrame++;
+      if (currentFrame >= TOTAL_FRAMES) {
+        currentFrame = TOTAL_FRAMES - 1;
+        drawFrame(currentFrame);
+        stopAnimation();
+        return;
+      }
+      drawFrame(currentFrame);
+    }, 1000 / FPS);
+  }
+
   async function startPlayback() {
+    stopAnimation();
+    currentFrame = 0;
+    drawFrame(0);
+
     try {
       audio1.pause();
       audio1.currentTime = 0;
       audio1.volume = 1;
       await audio1.play();
-      startAnimationLoop();
     } catch (e) {
-      console.error("startPlayback:", e);
+      console.error("audio play:", e);
     }
+
+    startAnimation();
   }
 
   helpBtn.addEventListener("click", () => {
@@ -358,7 +369,6 @@
 
   startBtn.addEventListener("click", async () => {
     try {
-      drawFrame(0);
       await unlockAudio();
       await scene.systems["mindar-image-system"].start();
 
@@ -400,13 +410,14 @@
     plane0.setAttribute("visible", false);
     setStatus("Inquadra il cappellino ✨");
     page.textContent = "Target: cappellino";
-    stopAnimationLoop();
+    stopAnimation();
     stopAudio();
     clearCanvas();
+    forceTextureRefresh();
   });
 
   audio1.addEventListener("ended", () => {
-    stopAnimationLoop();
+    stopAnimation();
     drawFrame(TOTAL_FRAMES - 1);
   });
 </script>
