@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test video alpha</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(45deg, red, blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+      gap: 20px;
+      font-family: Arial, sans-serif;
+    }
+    video {
+      width: 320px;
+      height: auto;
+      background: transparent;
+    }
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <video id="v" playsinline webkit-playsinline muted loop preload="auto">
+    <source src="./assets/avatar/video-alpha.webm" type="video/webm">
+  </video>
+
+  <button id="playBtn">Play test</button>
+
+  <script>
+    const v = document.getElementById("v");
+    document.getElementById("playBtn").addEventListener("click", async () => {
+      try {
+        await v.play();
+      } catch (e) {
+        console.error(e);
+        alert("Errore play video");
+      }
+    });
+  </script>
+</body>
+</html>
