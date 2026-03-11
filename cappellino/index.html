@@ -36,9 +36,9 @@
     .overlay {
       position: fixed;
       inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       z-index: 20;
       padding: 18px;
       background:
@@ -52,7 +52,7 @@
       border: 1px solid rgba(255,255,255,.6);
       border-radius: 22px;
       padding: 18px;
-      text-align: center;
+      text-align:center;
       box-shadow: 0 18px 50px rgba(0,0,0,.18);
       backdrop-filter: blur(10px);
     }
@@ -61,7 +61,7 @@
       margin: 2px 0 6px;
       font-size: 20px;
       font-weight: 800;
-      color: #2b1220;
+      color:#2b1220;
     }
 
     .sub {
@@ -72,10 +72,10 @@
     }
 
     .row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
     }
 
     .btn {
@@ -99,18 +99,18 @@
       top: 10px;
       left: 10px;
       right: 10px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
       z-index: 30;
-      pointer-events: none;
+      pointer-events:none;
     }
 
     .badge {
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      pointer-events:auto;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
       padding: 10px 12px;
       border-radius: 999px;
       background: rgba(255,255,255,.55);
@@ -121,13 +121,8 @@
       box-shadow: 0 12px 30px rgba(0,0,0,.12);
     }
 
-    .badge strong {
-      font-weight: 900;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+    .badge strong { font-weight: 900; }
+    .hidden { display:none !important; }
 
     #frameCanvas {
       display: none;
@@ -167,6 +162,8 @@
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
+    <img id="sprite1" src="./assets/avatar/sprite_1.png?v=5" crossorigin="anonymous">
+
     <audio id="audio1" crossorigin="anonymous" preload="auto" playsinline>
       <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
     </audio>
@@ -197,58 +194,35 @@
   const target0 = document.getElementById("target0");
   const plane0 = document.getElementById("plane0");
   const audio1 = document.getElementById("audio1");
+  const sprite1 = document.getElementById("sprite1");
 
   const frameCanvas = document.getElementById("frameCanvas");
   const ctx = frameCanvas.getContext("2d", { alpha: true });
 
-  const FPS = 25;
-  const FRAME_W = 512;
-  const FRAME_H = 288;
+  const TILE_W = 512;
+  const TILE_H = 288;
   const COLS = 8;
-  const TOTAL_FRAMES = 602;
 
   const CROP_X = 175;
   const CROP_Y = 8;
   const CROP_W = 170;
   const CROP_H = 278;
 
-  const spriteDefs = [
-    { src: "./assets/avatar/sprite_1.png",  start: 0,   count: 64 },
-    { src: "./assets/avatar/sprite_2.png",  start: 64,  count: 64 },
-    { src: "./assets/avatar/sprite_3.png",  start: 128, count: 64 },
-    { src: "./assets/avatar/sprite_4.png",  start: 192, count: 64 },
-    { src: "./assets/avatar/sprite_5.png",  start: 256, count: 64 },
-    { src: "./assets/avatar/sprite_6.png",  start: 320, count: 64 },
-    { src: "./assets/avatar/sprite_7.png",  start: 384, count: 64 },
-    { src: "./assets/avatar/sprite_8.png",  start: 448, count: 64 },
-    { src: "./assets/avatar/sprite_9.png",  start: 512, count: 64 },
-    { src: "./assets/avatar/sprite_10.png", start: 576, count: 26 }
-  ];
+  const TEST_FRAMES = 16;   // primi 16 frame
+  const FPS = 8;            // lento per vedere bene il movimento
 
-  let sprites = [];
-  let spritesLoaded = false;
+  let animTimer = null;
   let arStarted = false;
-  let targetVisible = false;
-  let animationInterval = null;
-  let currentFrame = 0;
 
   function setStatus(text) {
     status.textContent = "AR " + text;
   }
 
-  function clearCanvas() {
-    ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
-  }
-
-  function forceTextureRefresh() {
-    const materialComponent = plane0.components.material;
-    if (
-      materialComponent &&
-      materialComponent.material &&
-      materialComponent.material.map
-    ) {
-      materialComponent.material.map.needsUpdate = true;
-    }
+  function stopAudio() {
+    try {
+      audio1.pause();
+      audio1.currentTime = 0;
+    } catch (e) {}
   }
 
   async function unlockAudio() {
@@ -262,105 +236,46 @@
     }
   }
 
-  function stopAudio() {
-    try {
-      audio1.pause();
-      audio1.currentTime = 0;
-    } catch (e) {}
-  }
-
-  async function loadSpritesOnce() {
-    if (spritesLoaded) return;
-
-    setStatus("Carico animazione...");
-    page.classList.remove("hidden");
-    page.textContent = "Carico animazione...";
-
-    sprites = await Promise.all(
-      spriteDefs.map(def => new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve({ ...def, img });
-        img.onerror = () => reject(new Error("Errore caricamento " + def.src));
-        img.src = def.src + "?v=4";
-      }))
-    );
-
-    spritesLoaded = true;
-  }
-
-  function getSpriteForFrame(frameIndex) {
-    for (const s of sprites) {
-      if (frameIndex >= s.start && frameIndex < s.start + s.count) {
-        return s;
-      }
-    }
-    return sprites[0];
-  }
-
-  function drawFrame(frameIndex) {
-    if (!spritesLoaded) return;
-
-    if (frameIndex < 0) frameIndex = 0;
-    if (frameIndex >= TOTAL_FRAMES) frameIndex = TOTAL_FRAMES - 1;
-
-    const sprite = getSpriteForFrame(frameIndex);
-    const localIndex = frameIndex - sprite.start;
-
+  function drawFrameFromSprite(localIndex) {
     const col = localIndex % COLS;
     const row = Math.floor(localIndex / COLS);
 
-    const sx = col * FRAME_W + CROP_X;
-    const sy = row * FRAME_H + CROP_Y;
+    const sx = col * TILE_W + CROP_X;
+    const sy = row * TILE_H + CROP_Y;
 
-    clearCanvas();
+    ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
     ctx.drawImage(
-      sprite.img,
+      sprite1,
       sx, sy, CROP_W, CROP_H,
       0, 0, frameCanvas.width, frameCanvas.height
     );
 
-    forceTextureRefresh();
-  }
-
-  function stopAnimation() {
-    if (animationInterval) {
-      clearInterval(animationInterval);
-      animationInterval = null;
+    const mat = plane0.components.material;
+    if (mat && mat.material && mat.material.map) {
+      mat.material.map.needsUpdate = true;
     }
   }
 
-  function startAnimation() {
-    stopAnimation();
-    currentFrame = 0;
-    drawFrame(currentFrame);
+  function stopTestAnimation() {
+    if (animTimer) {
+      clearInterval(animTimer);
+      animTimer = null;
+    }
+  }
 
-    animationInterval = setInterval(() => {
-      currentFrame++;
-      if (currentFrame >= TOTAL_FRAMES) {
-        currentFrame = TOTAL_FRAMES - 1;
-        drawFrame(currentFrame);
-        stopAnimation();
-        return;
+  function startTestAnimation() {
+    stopTestAnimation();
+
+    let frame = 0;
+    drawFrameFromSprite(frame);
+
+    animTimer = setInterval(() => {
+      frame++;
+      if (frame >= TEST_FRAMES) {
+        frame = 0;
       }
-      drawFrame(currentFrame);
+      drawFrameFromSprite(frame);
     }, 1000 / FPS);
-  }
-
-  async function startPlayback() {
-    stopAnimation();
-    currentFrame = 0;
-    drawFrame(0);
-
-    try {
-      audio1.pause();
-      audio1.currentTime = 0;
-      audio1.volume = 1;
-      await audio1.play();
-    } catch (e) {
-      console.error("audio play:", e);
-    }
-
-    startAnimation();
   }
 
   helpBtn.addEventListener("click", () => {
@@ -384,41 +299,29 @@
   });
 
   target0.addEventListener("targetFound", async () => {
-    try {
-      targetVisible = true;
-      plane0.setAttribute("visible", true);
-      setStatus("Trovato ✅");
-      page.textContent = "Carico animazione...";
+    plane0.setAttribute("visible", true);
+    setStatus("Trovato ✅");
+    page.textContent = "Test animazione…";
 
-      await loadSpritesOnce();
+    startTestAnimation();
 
-      drawFrame(0);
-      page.textContent = "In riproduzione…";
-
-      if (arStarted) {
-        await startPlayback();
+    if (arStarted) {
+      try {
+        audio1.currentTime = 0;
+        await audio1.play();
+      } catch (e) {
+        console.error("audio play:", e);
       }
-    } catch (e) {
-      console.error("Errore targetFound:", e);
-      setStatus("Errore asset");
-      page.textContent = "Errore caricamento sprite";
     }
   });
 
   target0.addEventListener("targetLost", () => {
-    targetVisible = false;
     plane0.setAttribute("visible", false);
     setStatus("Inquadra il cappellino ✨");
     page.textContent = "Target: cappellino";
-    stopAnimation();
+    stopTestAnimation();
     stopAudio();
-    clearCanvas();
-    forceTextureRefresh();
-  });
-
-  audio1.addEventListener("ended", () => {
-    stopAnimation();
-    drawFrame(TOTAL_FRAMES - 1);
+    ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
   });
 </script>
 
