@@ -162,7 +162,7 @@
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <img id="sprite1" src="./assets/avatar/sprite_1.png?v=5" crossorigin="anonymous">
+    <img id="sprite1" src="./assets/avatar/sprite_1.png?v=6" crossorigin="anonymous">
 
     <audio id="audio1" crossorigin="anonymous" preload="auto" playsinline>
       <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
@@ -174,8 +174,8 @@
   <a-entity id="target0" mindar-image-target="targetIndex: 0">
     <a-plane
       id="plane0"
-      width="0.62"
-      height="1.02"
+      width="1.0"
+      height="0.5625"
       visible="false"
       material="shader: flat; src: #frameCanvas; transparent: true; alphaTest: 0.01">
     </a-plane>
@@ -202,17 +202,12 @@
   const TILE_W = 512;
   const TILE_H = 288;
   const COLS = 8;
-
-  const CROP_X = 175;
-  const CROP_Y = 8;
-  const CROP_W = 170;
-  const CROP_H = 278;
-
-  const TEST_FRAMES = 16;   // primi 16 frame
-  const FPS = 8;            // lento per vedere bene il movimento
+  const TEST_FRAMES = 16;
+  const FPS = 8;
 
   let animTimer = null;
   let arStarted = false;
+  let spriteReady = false;
 
   function setStatus(text) {
     status.textContent = "AR " + text;
@@ -236,24 +231,28 @@
     }
   }
 
-  function drawFrameFromSprite(localIndex) {
-    const col = localIndex % COLS;
-    const row = Math.floor(localIndex / COLS);
-
-    const sx = col * TILE_W + CROP_X;
-    const sy = row * TILE_H + CROP_Y;
-
-    ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
-    ctx.drawImage(
-      sprite1,
-      sx, sy, CROP_W, CROP_H,
-      0, 0, frameCanvas.width, frameCanvas.height
-    );
-
+  function refreshTexture() {
     const mat = plane0.components.material;
     if (mat && mat.material && mat.material.map) {
       mat.material.map.needsUpdate = true;
     }
+  }
+
+  function drawFrameFromSprite(localIndex) {
+    const col = localIndex % COLS;
+    const row = Math.floor(localIndex / COLS);
+
+    const sx = col * TILE_W;
+    const sy = row * TILE_H;
+
+    ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
+    ctx.drawImage(
+      sprite1,
+      sx, sy, TILE_W, TILE_H,
+      0, 0, frameCanvas.width, frameCanvas.height
+    );
+
+    refreshTexture();
   }
 
   function stopTestAnimation() {
@@ -271,15 +270,25 @@
 
     animTimer = setInterval(() => {
       frame++;
-      if (frame >= TEST_FRAMES) {
-        frame = 0;
-      }
+      if (frame >= TEST_FRAMES) frame = 0;
       drawFrameFromSprite(frame);
     }, 1000 / FPS);
   }
 
   helpBtn.addEventListener("click", () => {
     alert("1) Tocca 'Avvia esperienza'\\n2) Consenti la fotocamera\\n3) Inquadra il cappellino");
+  });
+
+  sprite1.addEventListener("load", () => {
+    spriteReady = true;
+    drawFrameFromSprite(0);
+  });
+
+  sprite1.addEventListener("error", () => {
+    console.error("Errore caricamento sprite_1");
+    setStatus("Errore sprite");
+    page.classList.remove("hidden");
+    page.textContent = "Errore sprite_1";
   });
 
   startBtn.addEventListener("click", async () => {
@@ -299,10 +308,17 @@
   });
 
   target0.addEventListener("targetFound", async () => {
+    if (!spriteReady) {
+      setStatus("Attendo sprite...");
+      page.textContent = "Attendo sprite...";
+      return;
+    }
+
     plane0.setAttribute("visible", true);
     setStatus("Trovato ✅");
     page.textContent = "Test animazione…";
 
+    drawFrameFromSprite(0);
     startTestAnimation();
 
     if (arStarted) {
@@ -322,6 +338,7 @@
     stopTestAnimation();
     stopAudio();
     ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
+    refreshTexture();
   });
 </script>
 
