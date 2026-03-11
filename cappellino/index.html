@@ -176,7 +176,7 @@
     <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
   </audio>
 
-  <canvas id="animCanvas" width="960" height="540"></canvas>
+  <canvas id="animCanvas" width="512" height="288"></canvas>
 
   <a-scene
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no;"
@@ -217,16 +217,22 @@
     const ctx = canvas.getContext("2d", { alpha: true });
 
     const FPS = 25;
-    const FRAME_W = 960;
-    const FRAME_H = 540;
-    const COLS = 13;
+    const FRAME_W = 512;
+    const FRAME_H = 288;
+    const COLS = 8;
     const TOTAL_FRAMES = 602;
 
     const spriteDefs = [
-      { src: "./assets/avatar/sprite_1.png", start: 0,   count: 156 },
-      { src: "./assets/avatar/sprite_2.png", start: 156, count: 156 },
-      { src: "./assets/avatar/sprite_3.png", start: 312, count: 156 },
-      { src: "./assets/avatar/sprite_4.png", start: 468, count: 134 }
+      { src: "./assets/avatar/sprite_1.png", start: 0,   count: 64 },
+      { src: "./assets/avatar/sprite_2.png", start: 64,  count: 64 },
+      { src: "./assets/avatar/sprite_3.png", start: 128, count: 64 },
+      { src: "./assets/avatar/sprite_4.png", start: 192, count: 64 },
+      { src: "./assets/avatar/sprite_5.png", start: 256, count: 64 },
+      { src: "./assets/avatar/sprite_6.png", start: 320, count: 64 },
+      { src: "./assets/avatar/sprite_7.png", start: 384, count: 64 },
+      { src: "./assets/avatar/sprite_8.png", start: 448, count: 64 },
+      { src: "./assets/avatar/sprite_9.png", start: 512, count: 64 },
+      { src: "./assets/avatar/sprite_10.png", start: 576, count: 26 }
     ];
 
     let spritesLoaded = false;
@@ -258,7 +264,7 @@
             const img = new Image();
             img.onload = () => resolve({ ...def, img });
             img.onerror = () => reject(new Error("Errore caricamento " + def.src));
-            img.src = def.src + "?v=1";
+            img.src = def.src + "?v=2";
           });
         })
       );
