@@ -162,8 +162,6 @@
   device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <img id="sprite1" src="./assets/avatar/sprite_1.png?v=6" crossorigin="anonymous">
-
     <audio id="audio1" crossorigin="anonymous" preload="auto" playsinline>
       <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
     </audio>
@@ -194,7 +192,6 @@
   const target0 = document.getElementById("target0");
   const plane0 = document.getElementById("plane0");
   const audio1 = document.getElementById("audio1");
-  const sprite1 = document.getElementById("sprite1");
 
   const frameCanvas = document.getElementById("frameCanvas");
   const ctx = frameCanvas.getContext("2d", { alpha: true });
@@ -202,12 +199,27 @@
   const TILE_W = 512;
   const TILE_H = 288;
   const COLS = 8;
-  const TEST_FRAMES = 16;
-  const FPS = 8;
+  const FPS = 25;
+  const TOTAL_FRAMES = 602;
 
+  const spriteDefs = [
+    { src: "./assets/avatar/sprite_1.png",  start: 0,   count: 64 },
+    { src: "./assets/avatar/sprite_2.png",  start: 64,  count: 64 },
+    { src: "./assets/avatar/sprite_3.png",  start: 128, count: 64 },
+    { src: "./assets/avatar/sprite_4.png",  start: 192, count: 64 },
+    { src: "./assets/avatar/sprite_5.png",  start: 256, count: 64 },
+    { src: "./assets/avatar/sprite_6.png",  start: 320, count: 64 },
+    { src: "./assets/avatar/sprite_7.png",  start: 384, count: 64 },
+    { src: "./assets/avatar/sprite_8.png",  start: 448, count: 64 },
+    { src: "./assets/avatar/sprite_9.png",  start: 512, count: 64 },
+    { src: "./assets/avatar/sprite_10.png", start: 576, count: 26 }
+  ];
+
+  let sprites = [];
+  let spritesLoaded = false;
   let animTimer = null;
   let arStarted = false;
-  let spriteReady = false;
+  let targetVisible = false;
 
   function setStatus(text) {
     status.textContent = "AR " + text;
@@ -238,7 +250,43 @@
     }
   }
 
-  function drawFrameFromSprite(localIndex) {
+  async function loadSpritesOnce() {
+    if (spritesLoaded) return;
+
+    setStatus("Carico animazione...");
+    page.classList.remove("hidden");
+    page.textContent = "Carico animazione...";
+
+    sprites = await Promise.all(
+      spriteDefs.map(def => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({ ...def, img });
+        img.onerror = () => reject(new Error("Errore caricamento " + def.src));
+        img.src = def.src + "?v=7";
+      }))
+    );
+
+    spritesLoaded = true;
+  }
+
+  function getSpriteForFrame(frameIndex) {
+    for (const s of sprites) {
+      if (frameIndex >= s.start && frameIndex < s.start + s.count) {
+        return s;
+      }
+    }
+    return sprites[0];
+  }
+
+  function drawFrame(frameIndex) {
+    if (!spritesLoaded) return;
+
+    if (frameIndex < 0) frameIndex = 0;
+    if (frameIndex >= TOTAL_FRAMES) frameIndex = TOTAL_FRAMES - 1;
+
+    const sprite = getSpriteForFrame(frameIndex);
+    const localIndex = frameIndex - sprite.start;
+
     const col = localIndex % COLS;
     const row = Math.floor(localIndex / COLS);
 
@@ -247,7 +295,7 @@
 
     ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
     ctx.drawImage(
-      sprite1,
+      sprite.img,
       sx, sy, TILE_W, TILE_H,
       0, 0, frameCanvas.width, frameCanvas.height
     );
@@ -255,40 +303,33 @@
     refreshTexture();
   }
 
-  function stopTestAnimation() {
+  function stopAnimation() {
     if (animTimer) {
       clearInterval(animTimer);
       animTimer = null;
     }
   }
 
-  function startTestAnimation() {
-    stopTestAnimation();
+  function startAnimation() {
+    stopAnimation();
 
     let frame = 0;
-    drawFrameFromSprite(frame);
+    drawFrame(frame);
 
     animTimer = setInterval(() => {
       frame++;
-      if (frame >= TEST_FRAMES) frame = 0;
-      drawFrameFromSprite(frame);
+      if (frame >= TOTAL_FRAMES) {
+        frame = TOTAL_FRAMES - 1;
+        drawFrame(frame);
+        stopAnimation();
+        return;
+      }
+      drawFrame(frame);
     }, 1000 / FPS);
   }
 
   helpBtn.addEventListener("click", () => {
     alert("1) Tocca 'Avvia esperienza'\\n2) Consenti la fotocamera\\n3) Inquadra il cappellino");
-  });
-
-  sprite1.addEventListener("load", () => {
-    spriteReady = true;
-    drawFrameFromSprite(0);
-  });
-
-  sprite1.addEventListener("error", () => {
-    console.error("Errore caricamento sprite_1");
-    setStatus("Errore sprite");
-    page.classList.remove("hidden");
-    page.textContent = "Errore sprite_1";
   });
 
   startBtn.addEventListener("click", async () => {
@@ -308,37 +349,48 @@
   });
 
   target0.addEventListener("targetFound", async () => {
-    if (!spriteReady) {
-      setStatus("Attendo sprite...");
-      page.textContent = "Attendo sprite...";
-      return;
-    }
+    try {
+      targetVisible = true;
 
-    plane0.setAttribute("visible", true);
-    setStatus("Trovato ✅");
-    page.textContent = "Test animazione…";
+      plane0.setAttribute("visible", true);
+      setStatus("Trovato ✅");
+      page.textContent = "Carico animazione...";
 
-    drawFrameFromSprite(0);
-    startTestAnimation();
+      await loadSpritesOnce();
 
-    if (arStarted) {
-      try {
-        audio1.currentTime = 0;
-        await audio1.play();
-      } catch (e) {
-        console.error("audio play:", e);
+      drawFrame(0);
+      page.textContent = "In riproduzione…";
+
+      startAnimation();
+
+      if (arStarted) {
+        try {
+          audio1.currentTime = 0;
+          await audio1.play();
+        } catch (e) {
+          console.error("audio play:", e);
+        }
       }
+    } catch (e) {
+      console.error("Errore targetFound:", e);
+      setStatus("Errore asset");
+      page.textContent = "Errore caricamento sprite";
     }
   });
 
   target0.addEventListener("targetLost", () => {
+    targetVisible = false;
     plane0.setAttribute("visible", false);
     setStatus("Inquadra il cappellino ✨");
     page.textContent = "Target: cappellino";
-    stopTestAnimation();
+    stopAnimation();
     stopAudio();
     ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
     refreshTexture();
+  });
+
+  audio1.addEventListener("ended", () => {
+    stopAnimation();
   });
 </script>
 
