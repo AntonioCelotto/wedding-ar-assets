@@ -14,7 +14,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     }
 
     body {
@@ -36,9 +36,9 @@
     .overlay {
       position: fixed;
       inset: 0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 20;
       padding: 18px;
       background:
@@ -52,7 +52,7 @@
       border: 1px solid rgba(255,255,255,.6);
       border-radius: 22px;
       padding: 18px;
-      text-align:center;
+      text-align: center;
       box-shadow: 0 18px 50px rgba(0,0,0,.18);
       backdrop-filter: blur(10px);
     }
@@ -61,7 +61,7 @@
       margin: 2px 0 6px;
       font-size: 20px;
       font-weight: 800;
-      color:#2b1220;
+      color: #2b1220;
     }
 
     .sub {
@@ -72,10 +72,10 @@
     }
 
     .row {
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
     .btn {
@@ -99,18 +99,18 @@
       top: 10px;
       left: 10px;
       right: 10px;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
       z-index: 30;
-      pointer-events:none;
+      pointer-events: none;
     }
 
     .badge {
-      pointer-events:auto;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       padding: 10px 12px;
       border-radius: 999px;
       background: rgba(255,255,255,.55);
@@ -121,19 +121,15 @@
       box-shadow: 0 12px 30px rgba(0,0,0,.12);
     }
 
-    .badge strong { font-weight: 900; }
-    .hidden { display:none !important; }
-
-    #frameCanvas {
-      display: none;
+    .badge strong {
+      font-weight: 900;
     }
 
-    #audioBtn {
-      position: fixed;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 40;
+    .hidden {
+      display: none !important;
+    }
+
+    #frameCanvas {
       display: none;
     }
   </style>
@@ -141,148 +137,173 @@
 
 <body>
 
-<div class="pill">
-  <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
-  <div class="badge hidden" id="page">Target: cappellino</div>
-</div>
+  <div class="pill">
+    <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
+    <div class="badge hidden" id="page">Target: cappellino</div>
+  </div>
 
-<div class="overlay" id="ui">
-  <div class="card">
-    <div class="title">Cappellino AR Experience</div>
-    <div class="sub">
-      Tocca “Avvia esperienza”, consenti la fotocamera e inquadra il cappellino.
-    </div>
-    <div class="row">
-      <button class="btn primary" id="startBtn">Avvia esperienza</button>
-      <button class="btn" id="helpBtn">Come funziona</button>
-    </div>
-    <div class="sub" style="margin-top:10px;font-size:12.5px;">
-      Consiglio: luce buona + cappellino fermo per 1–2 secondi
+  <div class="overlay" id="ui">
+    <div class="card">
+      <div class="title">Cappellino AR Experience</div>
+      <div class="sub">
+        Tocca “Avvia esperienza”, consenti la fotocamera e inquadra il cappellino.
+      </div>
+      <div class="row">
+        <button class="btn primary" id="startBtn">Avvia esperienza</button>
+        <button class="btn" id="helpBtn">Come funziona</button>
+      </div>
+      <div class="sub" style="margin-top:10px;font-size:12.5px;">
+        Consiglio: luce buona + cappellino fermo per 1–2 secondi
+      </div>
     </div>
   </div>
-</div>
 
-<button class="btn" id="audioBtn">Attiva audio</button>
+  <canvas id="frameCanvas" width="512" height="288"></canvas>
 
-<canvas id="frameCanvas" width="512" height="288"></canvas>
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+    embedded
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-assets>
+      <img id="sprite1" src="./assets/avatar/sprite_1.png" crossorigin="anonymous">
 
-<a-scene
-  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
-  embedded
-  vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false">
+      <audio id="audio1" crossorigin="anonymous" preload="auto" playsinline>
+        <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
+      </audio>
+    </a-assets>
 
-  <a-assets>
-    <img id="sprite1" src="./assets/avatar/sprite_1.png" crossorigin="anonymous">
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <audio id="audio1" crossorigin="anonymous" preload="auto">
-      <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
-    </audio>
-  </a-assets>
+    <a-entity id="target0" mindar-image-target="targetIndex: 0">
+      <a-plane
+        id="plane0"
+        width="0.62"
+        height="1.02"
+        visible="false"
+        material="shader: flat; src: #frameCanvas; transparent: true; alphaTest: 0.01">
+      </a-plane>
+    </a-entity>
+  </a-scene>
 
-  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+  <script>
+    const ui = document.getElementById("ui");
+    const startBtn = document.getElementById("startBtn");
+    const helpBtn = document.getElementById("helpBtn");
+    const status = document.getElementById("status");
+    const page = document.getElementById("page");
+    const scene = document.querySelector("a-scene");
 
-  <a-entity id="target0" mindar-image-target="targetIndex: 0">
-    <a-plane
-      id="plane0"
-      width="0.55"
-      height="1.05"
-      visible="false"
-      material="shader: flat; src: #frameCanvas; transparent: true; alphaTest: 0.01">
-    </a-plane>
-  </a-entity>
+    const target0 = document.getElementById("target0");
+    const plane0 = document.getElementById("plane0");
+    const audio1 = document.getElementById("audio1");
 
-</a-scene>
+    const sprite1 = document.getElementById("sprite1");
+    const frameCanvas = document.getElementById("frameCanvas");
+    const ctx = frameCanvas.getContext("2d", { alpha: true });
 
-<script>
-  const ui = document.getElementById("ui");
-  const startBtn = document.getElementById("startBtn");
-  const helpBtn = document.getElementById("helpBtn");
-  const status = document.getElementById("status");
-  const page = document.getElementById("page");
-  const scene = document.querySelector("a-scene");
+    const FRAME_W = 512;
+    const FRAME_H = 288;
 
-  const target0 = document.getElementById("target0");
-  const plane0 = document.getElementById("plane0");
-  const audio1 = document.getElementById("audio1");
-  const audioBtn = document.getElementById("audioBtn");
+    const CROP_X = 175;
+    const CROP_Y = 8;
+    const CROP_W = 170;
+    const CROP_H = 278;
 
-  const sprite1 = document.getElementById("sprite1");
-  const frameCanvas = document.getElementById("frameCanvas");
-  const ctx = frameCanvas.getContext("2d", { alpha: true });
+    let arStarted = false;
+    let targetVisible = false;
+    let audioUnlocked = false;
 
-  const FRAME_W = 512;
-  const FRAME_H = 288;
+    function setStatus(text) {
+      status.textContent = "AR " + text;
+    }
 
-  function setStatus(text) {
-    status.textContent = "AR " + text;
-  }
+    function drawFirstFrame() {
+      ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
+      ctx.drawImage(
+        sprite1,
+        CROP_X, CROP_Y, CROP_W, CROP_H,
+        0, 0, frameCanvas.width, frameCanvas.height
+      );
+    }
 
-  function drawFirstFrame() {
-    ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
-    ctx.drawImage(
-      sprite1,
-      0, 0, FRAME_W, FRAME_H,
-      0, 0, frameCanvas.width, frameCanvas.height
-    );
-  }
+    function stopAudio() {
+      try {
+        audio1.pause();
+        audio1.currentTime = 0;
+      } catch (e) {}
+    }
 
-  function stopAudio() {
-    try {
-      audio1.pause();
-      audio1.currentTime = 0;
-    } catch (e) {}
-  }
+    async function unlockAudio() {
+      try {
+        audio1.volume = 1;
+        await audio1.play();
+        audio1.pause();
+        audio1.currentTime = 0;
+        audioUnlocked = true;
+      } catch (e) {
+        console.error("unlockAudio:", e);
+        audioUnlocked = false;
+      }
+    }
 
-  async function unlockAudio() {
-    try {
-      await audio1.play();
-      audio1.pause();
-      audio1.currentTime = 0;
-    } catch (e) {}
-  }
+    async function playAudioNow() {
+      try {
+        audio1.pause();
+        audio1.currentTime = 0;
+        audio1.volume = 1;
+        await audio1.play();
+      } catch (e) {
+        console.error("playAudioNow:", e);
+      }
+    }
 
-  helpBtn.addEventListener("click", () => {
-    alert("1) Tocca 'Avvia esperienza'\n2) Consenti la fotocamera\n3) Inquadra il cappellino\n4) Tocca 'Attiva audio'");
-  });
+    helpBtn.addEventListener("click", () => {
+      alert("1) Tocca 'Avvia esperienza'\n2) Consenti la fotocamera\n3) Inquadra il cappellino");
+    });
 
-  startBtn.addEventListener("click", async () => {
-    await unlockAudio();
-    await scene.systems["mindar-image-system"].start();
-    ui.style.display = "none";
-    page.classList.remove("hidden");
-    page.textContent = "Target: cappellino";
-    setStatus("Inquadra il cappellino ✨");
-  });
+    startBtn.addEventListener("click", async () => {
+      try {
+        drawFirstFrame();
+        await unlockAudio();
+        await scene.systems["mindar-image-system"].start();
 
-  sprite1.addEventListener("load", () => {
-    drawFirstFrame();
-  });
+        arStarted = true;
+        ui.style.display = "none";
+        page.classList.remove("hidden");
+        page.textContent = "Target: cappellino";
+        setStatus("Inquadra il cappellino ✨");
+      } catch (e) {
+        console.error("Errore avvio AR:", e);
+        alert("AR non avviata. Controlla targets.mind e i permessi fotocamera.");
+      }
+    });
 
-  target0.addEventListener("targetFound", async () => {
-    drawFirstFrame();
-    plane0.setAttribute("visible", true);
-    setStatus("Trovato ✅");
-    page.textContent = "In riproduzione…";
-    audioBtn.style.display = "inline-block";
-  });
+    sprite1.addEventListener("load", () => {
+      drawFirstFrame();
+    });
 
-  target0.addEventListener("targetLost", () => {
-    plane0.setAttribute("visible", false);
-    setStatus("Inquadra il cappellino ✨");
-    page.textContent = "Target: cappellino";
-    audioBtn.style.display = "none";
-    stopAudio();
-  });
+    target0.addEventListener("targetFound", async () => {
+      targetVisible = true;
+      drawFirstFrame();
+      plane0.setAttribute("visible", true);
+      setStatus("Trovato ✅");
+      page.textContent = "In riproduzione…";
 
-  audioBtn.addEventListener("click", async () => {
-    try {
-      audio1.currentTime = 0;
-      await audio1.play();
-      audioBtn.style.display = "none";
-    } catch (e) {}
-  });
-</script>
+      if (arStarted) {
+        await playAudioNow();
+      }
+    });
+
+    target0.addEventListener("targetLost", () => {
+      targetVisible = false;
+      plane0.setAttribute("visible", false);
+      setStatus("Inquadra il cappellino ✨");
+      page.textContent = "Target: cappellino";
+      stopAudio();
+    });
+  </script>
 
 </body>
 </html>
