@@ -174,13 +174,6 @@
     vr-mode-ui="enabled:false"
     device-orientation-permission-ui="enabled:false"
   >
-    <a-assets>
-      <img id="sprite1" src="./assets/avatar/sprite_1.png">
-      <img id="sprite2" src="./assets/avatar/sprite_2.png">
-      <img id="sprite3" src="./assets/avatar/sprite_3.png">
-      <img id="sprite4" src="./assets/avatar/sprite_4.png">
-    </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
     <a-entity id="t0" mindar-image-target="targetIndex: 0">
@@ -211,25 +204,21 @@
     const canvas = document.getElementById("animCanvas");
     const ctx = canvas.getContext("2d", { alpha: true });
 
-    const sprite1 = document.getElementById("sprite1");
-    const sprite2 = document.getElementById("sprite2");
-    const sprite3 = document.getElementById("sprite3");
-    const sprite4 = document.getElementById("sprite4");
-
     const FPS = 25;
     const FRAME_W = 960;
     const FRAME_H = 540;
     const COLS = 13;
-
-    const SPRITES = [
-      { img: sprite1, start: 0,   count: 156, rows: 12 },
-      { img: sprite2, start: 156, count: 156, rows: 12 },
-      { img: sprite3, start: 312, count: 156, rows: 12 },
-      { img: sprite4, start: 468, count: 134, rows: 11 }
-    ];
-
     const TOTAL_FRAMES = 602;
 
+    const spriteDefs = [
+      { src: "./assets/avatar/sprite_1.png", start: 0,   count: 156 },
+      { src: "./assets/avatar/sprite_2.png", start: 156, count: 156 },
+      { src: "./assets/avatar/sprite_3.png", start: 312, count: 156 },
+      { src: "./assets/avatar/sprite_4.png", start: 468, count: 134 }
+    ];
+
+    let spritesLoaded = false;
+    let sprites = [];
     let targetVisible = false;
     let animationRunning = false;
     let rafId = null;
@@ -244,22 +233,44 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
+    async function loadSpritesOnce() {
+      if (spritesLoaded) return;
+
+      setStatus("Carico animazione...");
+      page.classList.remove("hidden");
+      page.textContent = "Carico animazione...";
+
+      sprites = await Promise.all(
+        spriteDefs.map(def => {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve({ ...def, img });
+            img.onerror = () => reject(new Error("Errore caricamento " + def.src));
+            img.src = def.src;
+          });
+        })
+      );
+
+      spritesLoaded = true;
+    }
+
     function getSpriteForFrame(frameIndex) {
-      for (const s of SPRITES) {
+      for (const s of sprites) {
         if (frameIndex >= s.start && frameIndex < s.start + s.count) {
           return s;
         }
       }
-      return SPRITES[0];
+      return sprites[0];
     }
 
     function drawFrame(frameIndex) {
+      if (!spritesLoaded) return;
+
       if (frameIndex < 0) frameIndex = 0;
       if (frameIndex >= TOTAL_FRAMES) frameIndex = TOTAL_FRAMES - 1;
 
       const sprite = getSpriteForFrame(frameIndex);
       const localIndex = frameIndex - sprite.start;
-
       const col = localIndex % COLS;
       const row = Math.floor(localIndex / COLS);
 
@@ -342,53 +353,13 @@
       }
     }
 
-    function allSpritesLoaded() {
-      return sprite1.complete && sprite2.complete && sprite3.complete && sprite4.complete;
-    }
-
-    async function unlockAudio() {
-      try {
-        await audio.play();
-        audio.pause();
-        audio.currentTime = 0;
-      } catch (e) {
-        console.error("unlock audio:", e);
-      }
-    }
-
     helpBtn.addEventListener("click", () => {
       alert("1) Tocca 'Avvia esperienza'\\n2) Consenti la fotocamera\\n3) Inquadra il cappellino target\\n4) Se compare il pulsante, tocca 'Attiva audio'");
     });
 
     startBtn.addEventListener("click", async () => {
       try {
-        setStatus("Carico gli asset...");
-        await unlockAudio();
-
-        if (!allSpritesLoaded()) {
-          await new Promise((resolve) => {
-            let loaded = 0;
-            const imgs = [sprite1, sprite2, sprite3, sprite4];
-            imgs.forEach((img) => {
-              if (img.complete) {
-                loaded++;
-                if (loaded === imgs.length) resolve();
-              } else {
-                img.addEventListener("load", () => {
-                  loaded++;
-                  if (loaded === imgs.length) resolve();
-                }, { once: true });
-                img.addEventListener("error", () => {
-                  loaded++;
-                  if (loaded === imgs.length) resolve();
-                }, { once: true });
-              }
-            });
-          });
-        }
-
-        drawFrame(0);
-
+        setStatus("Avvio camera...");
         await scene.systems["mindar-image-system"].start();
 
         ui.style.display = "none";
@@ -397,16 +368,26 @@
         page.textContent = "Inquadra il cappellino";
       } catch (e) {
         console.error("Errore avvio AR:", e);
-        alert("AR non avviata. Controlla targets.mind e i percorsi dei file.");
+        alert("AR non avviata. Controlla targets.mind e i permessi fotocamera.");
       }
     });
 
     target.addEventListener("targetFound", async () => {
-      targetVisible = true;
-      plane.setAttribute("visible", true);
-      setStatus("Trovato ✅");
-      page.textContent = "In riproduzione…";
-      await startAudioAndAnimation();
+      try {
+        targetVisible = true;
+        plane.setAttribute("visible", true);
+        setStatus("Trovato ✅");
+
+        await loadSpritesOnce();
+
+        page.textContent = "In riproduzione…";
+        drawFrame(0);
+        await startAudioAndAnimation();
+      } catch (e) {
+        console.error("Errore targetFound:", e);
+        setStatus("Errore asset");
+        page.textContent = "Errore caricamento sprite";
+      }
     });
 
     target.addEventListener("targetLost", () => {
@@ -416,7 +397,7 @@
       page.textContent = "Inquadra il cappellino";
       audioBtn.style.display = "none";
       stopPlayback(true);
-      drawFrame(0);
+      clearCanvas();
     });
 
     audioBtn.addEventListener("click", async () => {
