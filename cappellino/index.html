@@ -159,6 +159,10 @@
 
   <button class="audioBtn" id="audioBtn">Attiva audio</button>
 
+  <audio id="a1" preload="auto">
+    <source src="./assets/audio/audioavatarnda.mp3" type="audio/mpeg">
+  </audio>
+
   <a-scene
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no;"
     embedded
@@ -170,7 +174,7 @@
     <a-assets>
       <video
         id="v1"
-        src="./assets/avatar/video-alpha-audio.webm"
+        src="./assets/avatar/video-alpha.webm"
         crossorigin="anonymous"
         preload="auto"
         playsinline
@@ -189,7 +193,7 @@
         width="1"
         height="1"
         visible="false"
-        material="shader: flat; src: #v1; transparent: true"
+        material="shader: flat; src: #v1; transparent: true; alphaTest: 0.01"
       ></a-plane>
     </a-entity>
   </a-scene>
@@ -205,6 +209,7 @@
     const scene = document.querySelector("a-scene");
     const target = document.getElementById("t0");
     const v1 = document.getElementById("v1");
+    const a1 = document.getElementById("a1");
     const videoPlane = document.getElementById("videoPlane");
 
     let targetVisible = false;
@@ -214,33 +219,44 @@
       status.textContent = "AR " + text;
     }
 
-    function stopVideo() {
+    function stopAll() {
       try {
         v1.pause();
         v1.currentTime = 0;
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
+
+      try {
+        a1.pause();
+        a1.currentTime = 0;
+      } catch (e) {}
     }
 
-    async function unlockVideo() {
+    async function unlockMedia() {
       try {
         v1.muted = true;
         await v1.play();
         v1.pause();
         v1.currentTime = 0;
       } catch (e) {
-        console.error("unlockVideo:", e);
+        console.error("unlock video:", e);
+      }
+
+      try {
+        await a1.play();
+        a1.pause();
+        a1.currentTime = 0;
+      } catch (e) {
+        console.error("unlock audio:", e);
       }
     }
 
     helpBtn.addEventListener("click", () => {
-      alert("1) Tocca 'Avvia esperienza'\\n2) Consenti la fotocamera\\n3) Inquadra il cappellino target\\n4) Tocca 'Attiva audio' se compare");
+      alert("1) Tocca 'Avvia esperienza'\\n2) Consenti la fotocamera\\n3) Inquadra il cappellino target\\n4) Tocca 'Attiva audio'");
     });
 
     startBtn.addEventListener("click", async () => {
       try {
-        await unlockVideo();
+        await unlockMedia();
         await scene.systems["mindar-image-system"].start();
         ui.style.display = "none";
         setStatus("Inquadra il cappellino ✨");
@@ -248,7 +264,7 @@
         page.textContent = "Inquadra il cappellino";
       } catch (e) {
         console.error("Errore avvio AR:", e);
-        alert("AR non avviata. Controlla che targets.mind sia nella cartella cappellino e che la pagina sia aperta da GitHub Pages.");
+        alert("AR non avviata. Controlla targets.mind e la pubblicazione della pagina.");
       }
     });
 
@@ -260,14 +276,12 @@
 
       try {
         v1.currentTime = 0;
-        v1.muted = !audioUnlocked;
         await v1.play();
-        if (!audioUnlocked) {
-          audioBtn.style.display = "inline-block";
-        }
       } catch (e) {
-        console.error("Errore play:", e);
+        console.error("Errore play video:", e);
       }
+
+      audioBtn.style.display = "inline-block";
     });
 
     target.addEventListener("targetLost", () => {
@@ -276,7 +290,7 @@
       page.textContent = "Inquadra il cappellino";
       audioBtn.style.display = "none";
       videoPlane.setAttribute("visible", false);
-      stopVideo();
+      stopAll();
     });
 
     audioBtn.addEventListener("click", async () => {
@@ -284,8 +298,8 @@
 
       try {
         audioUnlocked = true;
-        v1.muted = false;
-        await v1.play();
+        a1.currentTime = 0;
+        await a1.play();
         audioBtn.style.display = "none";
       } catch (e) {
         console.error("Errore audio:", e);
