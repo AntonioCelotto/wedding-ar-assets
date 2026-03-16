@@ -152,9 +152,10 @@
     device-orientation-permission-ui="enabled: false">
 
     <a-assets>
+      <!-- INVERTITI -->
       <video id="v1"
         crossorigin="anonymous"
-        src="https://video.wixstatic.com/video/047e10_dd971dc9e3634cc4b4e0871af681ecc6/720p/mp4/file.mp4"
+        src="https://video.wixstatic.com/video/047e10_e96865f9d61b400f86cb7da023625588/720p/mp4/file.mp4"
         preload="auto"
         playsinline
         webkit-playsinline
@@ -163,7 +164,7 @@
 
       <video id="v2"
         crossorigin="anonymous"
-        src="https://video.wixstatic.com/video/047e10_e96865f9d61b400f86cb7da023625588/720p/mp4/file.mp4"
+        src="https://video.wixstatic.com/video/047e10_dd971dc9e3634cc4b4e0871af681ecc6/720p/mp4/file.mp4"
         preload="auto"
         playsinline
         webkit-playsinline
@@ -215,11 +216,10 @@
     const v2 = document.getElementById("v2");
 
     let activeIdx = null;
-    let sceneReady = false;
 
     const targetInfo = {
-      0: { video: v1, plane: p0, name: "Lo Chef presenta" },
-      1: { video: v2, plane: p1, name: "Il piatto in AR" }
+      0: { video: v1, plane: p0, name: "Target 0" },
+      1: { video: v2, plane: p1, name: "Target 1" }
     };
 
     function setStatus(text) {
@@ -256,24 +256,17 @@
           await v.play();
           v.pause();
           v.currentTime = 0;
-        } catch (e) {
-          console.log("unlock skip", e);
-        }
+        } catch (e) {}
       }
     }
 
     function waitForSceneReady() {
       return new Promise((resolve) => {
         if (scene.hasLoaded) {
-          sceneReady = true;
           resolve();
           return;
         }
-
-        scene.addEventListener("loaded", () => {
-          sceneReady = true;
-          resolve();
-        }, { once: true });
+        scene.addEventListener("loaded", resolve, { once: true });
       });
     }
 
@@ -300,7 +293,6 @@
         audioBtn.style.display = "none";
       } catch (e) {
         console.error("Errore audio:", e);
-        alert("Audio non avviato");
       }
     });
 
@@ -316,23 +308,14 @@
       try {
         setStatus("Carico scena...");
         await waitForSceneReady();
-
-        if (!scene.systems["mindar-image-system"]) {
-          throw new Error("mindar-image-system non disponibile");
-        }
-
-        setStatus("Sblocco video...");
         await unlockVideos();
-
-        setStatus("Avvio camera...");
         await scene.systems["mindar-image-system"].start();
-
         ui.style.display = "none";
         setStatus("Inquadra una pagina ✨");
       } catch (e) {
         console.error("Errore start:", e);
         setStatus("Errore avvio");
-        alert("Avvio non riuscito. Controlla targets.mind e fotocamera.");
+        alert("Avvio non riuscito.");
       }
     });
 
@@ -341,7 +324,6 @@
       if (!info) return;
 
       activeIdx = idx;
-
       stopAllVideos();
 
       info.plane.setAttribute("visible", true);
@@ -360,7 +342,6 @@
 
     function handleLost(idx) {
       if (activeIdx !== idx) return;
-
       activeIdx = null;
       hidePage();
       audioBtn.style.display = "none";
