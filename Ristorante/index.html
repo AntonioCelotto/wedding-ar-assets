@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>MENU IN AR – Standalone</title>
+  <title>MENU IN AR – DEBUG TARGET</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -15,10 +15,7 @@
       height: 100%;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-    }
-
-    body {
-      background: linear-gradient(#0f0f12, #1a1a1f);
+      background: #111;
     }
 
     .overlay {
@@ -29,58 +26,26 @@
       justify-content: center;
       z-index: 20;
       padding: 18px;
-      background:
-        radial-gradient(circle at 50% 25%, rgba(255,255,255,.10), rgba(255,255,255,0) 55%),
-        linear-gradient(#0f0f12, #1a1a1f);
+      background: rgba(0,0,0,.85);
     }
 
     .card {
       width: min(520px, 100%);
-      background: rgba(20,20,24,.82);
-      border: 1px solid rgba(212,175,55,.35);
+      background: rgba(255,255,255,.95);
       border-radius: 22px;
       padding: 18px;
       text-align: center;
-      box-shadow: 0 18px 50px rgba(0,0,0,.45);
-      backdrop-filter: blur(10px);
-    }
-
-    .title {
-      margin: 2px 0 6px;
-      font-size: 20px;
-      font-weight: 900;
-      color: #f7f7fb;
-      letter-spacing: .3px;
-    }
-
-    .sub {
-      margin: 0 0 12px;
-      font-size: 14px;
-      color: rgba(247,247,251,.78);
-      line-height: 1.4;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
     }
 
     .btn {
       border: none;
       border-radius: 999px;
       padding: 12px 18px;
-      font-weight: 900;
+      font-weight: 800;
       cursor: pointer;
-      background: rgba(255,255,255,.95);
-      color: #111;
-      box-shadow: 0 10px 24px rgba(0,0,0,.25);
-    }
-
-    .btn.primary {
-      background: #D4AF37;
-      color: #111;
+      background: #111;
+      color: white;
     }
 
     .pill {
@@ -102,21 +67,10 @@
       gap: 8px;
       padding: 10px 12px;
       border-radius: 999px;
-      background: rgba(20,20,24,.55);
-      border: 1px solid rgba(212,175,55,.35);
-      color: rgba(247,247,251,.88);
+      background: rgba(255,255,255,.85);
+      color: #111;
       font-size: 13px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.25);
-    }
-
-    .badge strong {
-      font-weight: 900;
-      color: #D4AF37;
-    }
-
-    .hidden {
-      display: none !important;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
     }
   </style>
 </head>
@@ -124,23 +78,15 @@
 <body>
 
   <div class="pill">
-    <div class="badge" id="status"><strong>AR</strong> Pronto ✨</div>
-    <div class="badge hidden" id="page">Pagina: —</div>
+    <div class="badge" id="status">DEBUG pronto</div>
+    <div class="badge" id="page">Target: nessuno</div>
   </div>
 
   <div class="overlay" id="ui">
     <div class="card">
-      <div class="title">MENU IN AR</div>
-      <div class="sub">
-        Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra la pagina AR.
-      </div>
-      <div class="row">
-        <button class="btn primary" id="startBtn">Avvia esperienza</button>
-        <button class="btn" id="helpBtn">Come funziona</button>
-      </div>
-      <div class="sub" style="margin-top:10px;font-size:12.5px;">
-        Consiglio: luce buona + pagina ferma 1–2 sec.
-      </div>
+      <h2 style="margin-top:0;">Debug target MindAR</h2>
+      <p>Questo test serve solo a capire se il secondo target viene riconosciuto davvero.</p>
+      <button class="btn" id="startBtn">Avvia esperienza</button>
     </div>
   </div>
 
@@ -151,47 +97,27 @@
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
 
-    <a-assets>
-      <video id="v1"
-        crossorigin="anonymous"
-        src="https://video.wixstatic.com/video/047e10_dd971dc9e3634cc4b4e0871af681ecc6/720p/mp4/file.mp4"
-        preload="auto"
-        playsinline
-        webkit-playsinline
-        muted
-      ></video>
-
-      <video id="v2"
-        crossorigin="anonymous"
-        src="https://video.wixstatic.com/video/047e10_e96865f9d61b400f86cb7da023625588/720p/mp4/file.mp4"
-        preload="auto"
-        playsinline
-        webkit-playsinline
-        muted
-      ></video>
-    </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
+    <!-- target 0 -->
     <a-entity id="t0" mindar-image-target="targetIndex: 0">
       <a-plane
         id="p0"
         width="1.2"
         height="0.675"
-        position="0 0 0"
         visible="false"
-        material="shader: flat; src: #v1">
+        material="shader: flat; color: red; opacity: 0.7">
       </a-plane>
     </a-entity>
 
+    <!-- target 1 -->
     <a-entity id="t1" mindar-image-target="targetIndex: 1">
       <a-plane
         id="p1"
         width="1.2"
         height="0.675"
-        position="0 0 0"
         visible="false"
-        material="shader: flat; src: #v2">
+        material="shader: flat; color: blue; opacity: 0.7">
       </a-plane>
     </a-entity>
 
@@ -200,117 +126,28 @@
   <script>
     const ui = document.getElementById("ui");
     const startBtn = document.getElementById("startBtn");
-    const helpBtn = document.getElementById("helpBtn");
     const status = document.getElementById("status");
     const page = document.getElementById("page");
     const scene = document.getElementById("arScene");
 
     const t0 = document.getElementById("t0");
     const t1 = document.getElementById("t1");
-
     const p0 = document.getElementById("p0");
     const p1 = document.getElementById("p1");
 
-    const v1 = document.getElementById("v1");
-    const v2 = document.getElementById("v2");
-
-    let activeIdx = null;
-    let sceneReady = false;
-
-    const targetInfo = {
-      0: { video: v1, plane: p0, name: "Lo Chef presenta" },
-      1: { video: v2, plane: p1, name: "Il piatto in AR" }
-    };
-
     function setStatus(text) {
-      status.textContent = "AR " + text;
-    }
-
-    function showPage(name) {
-      page.classList.remove("hidden");
-      page.textContent = "Pagina: " + name;
-    }
-
-    function hidePage() {
-      page.classList.add("hidden");
-      page.textContent = "Pagina: —";
-    }
-
-    function stopAllVideos() {
-      [v1, v2].forEach(v => {
-        try {
-          v.pause();
-          v.currentTime = 0;
-          v.muted = true;
-        } catch (e) {}
-      });
-
-      p0.setAttribute("visible", false);
-      p1.setAttribute("visible", false);
-    }
-
-    async function unlockVideos() {
-      for (const v of [v1, v2]) {
-        try {
-          v.muted = true;
-          await v.play();
-          v.pause();
-          v.currentTime = 0;
-        } catch (e) {
-          console.log("unlock skip", e);
-        }
-      }
+      status.textContent = text;
     }
 
     function waitForSceneReady() {
       return new Promise((resolve) => {
         if (scene.hasLoaded) {
-          sceneReady = true;
           resolve();
           return;
         }
-
-        scene.addEventListener("loaded", () => {
-          sceneReady = true;
-          resolve();
-        }, { once: true });
+        scene.addEventListener("loaded", resolve, { once: true });
       });
     }
-
-    const audioBtn = document.createElement("button");
-    audioBtn.className = "btn";
-    audioBtn.textContent = "Attiva audio";
-    audioBtn.style.position = "fixed";
-    audioBtn.style.bottom = "14px";
-    audioBtn.style.left = "50%";
-    audioBtn.style.transform = "translateX(-50%)";
-    audioBtn.style.zIndex = "40";
-    audioBtn.style.display = "none";
-    document.body.appendChild(audioBtn);
-
-    audioBtn.addEventListener("click", async () => {
-      if (activeIdx === null) return;
-
-      const info = targetInfo[activeIdx];
-      if (!info) return;
-
-      try {
-        info.video.muted = false;
-        await info.video.play();
-        audioBtn.style.display = "none";
-      } catch (e) {
-        console.error("Errore audio:", e);
-        alert("Audio non avviato");
-      }
-    });
-
-    helpBtn.addEventListener("click", () => {
-      alert(
-        "1) Tocca 'Avvia esperienza'\n" +
-        "2) Consenti la fotocamera\n" +
-        "3) Inquadra la copertina oppure la pagina menu"
-      );
-    });
 
     startBtn.addEventListener("click", async () => {
       try {
@@ -321,67 +158,46 @@
           throw new Error("mindar-image-system non disponibile");
         }
 
-        setStatus("Sblocco video...");
-        await unlockVideos();
-
         setStatus("Avvio camera...");
         await scene.systems["mindar-image-system"].start();
 
         ui.style.display = "none";
-        setStatus("Inquadra una pagina ✨");
+        setStatus("Inquadra i target");
       } catch (e) {
-        console.error("Errore start:", e);
+        console.error(e);
         setStatus("Errore avvio");
-        alert("Avvio non riuscito. Controlla targets.mind e fotocamera.");
+        alert("Avvio non riuscito");
       }
     });
 
-    async function handleFound(idx) {
-      const info = targetInfo[idx];
-      if (!info) return;
-
-      activeIdx = idx;
-
-      stopAllVideos();
-
-      info.plane.setAttribute("visible", true);
-      showPage(info.name);
-      setStatus("Trovato target " + idx + " ✅");
-
-      try {
-        info.video.muted = true;
-        info.video.currentTime = 0;
-        await info.video.play();
-        audioBtn.style.display = "inline-block";
-      } catch (e) {
-        console.error("Errore play video target", idx, e);
-      }
-    }
-
-    function handleLost(idx) {
-      if (activeIdx !== idx) return;
-
-      activeIdx = null;
-      hidePage();
-      audioBtn.style.display = "none";
-      stopAllVideos();
-      setStatus("Inquadra una pagina ✨");
-    }
-
-    t0.addEventListener("targetFound", async () => {
-      await handleFound(0);
-    });
-
-    t1.addEventListener("targetFound", async () => {
-      await handleFound(1);
+    t0.addEventListener("targetFound", () => {
+      p0.setAttribute("visible", true);
+      p1.setAttribute("visible", false);
+      setStatus("Trovato target 0");
+      page.textContent = "Target: 0 (rosso)";
+      console.log("TARGET 0 TROVATO");
     });
 
     t0.addEventListener("targetLost", () => {
-      handleLost(0);
+      p0.setAttribute("visible", false);
+      setStatus("Perso target 0");
+      page.textContent = "Target: nessuno";
+      console.log("TARGET 0 PERSO");
+    });
+
+    t1.addEventListener("targetFound", () => {
+      p1.setAttribute("visible", true);
+      p0.setAttribute("visible", false);
+      setStatus("Trovato target 1");
+      page.textContent = "Target: 1 (blu)";
+      console.log("TARGET 1 TROVATO");
     });
 
     t1.addEventListener("targetLost", () => {
-      handleLost(1);
+      p1.setAttribute("visible", false);
+      setStatus("Perso target 1");
+      page.textContent = "Target: nessuno";
+      console.log("TARGET 1 PERSO");
     });
   </script>
 
