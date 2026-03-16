@@ -145,13 +145,13 @@
   </div>
 
   <a-scene
+    id="arScene"
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: no; uiError: no;"
     embedded
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
 
     <a-assets>
-      <!-- TARGET 0 -->
       <video id="v1"
         crossorigin="anonymous"
         src="https://video.wixstatic.com/video/047e10_dd971dc9e3634cc4b4e0871af681ecc6/720p/mp4/file.mp4"
@@ -161,7 +161,6 @@
         muted
       ></video>
 
-      <!-- TARGET 1 -->
       <video id="v2"
         crossorigin="anonymous"
         src="https://video.wixstatic.com/video/047e10_e96865f9d61b400f86cb7da023625588/720p/mp4/file.mp4"
@@ -174,7 +173,6 @@
 
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <!-- TARGET 0 -->
     <a-entity id="t0" mindar-image-target="targetIndex: 0">
       <a-plane
         id="p0"
@@ -186,7 +184,6 @@
       </a-plane>
     </a-entity>
 
-    <!-- TARGET 1 -->
     <a-entity id="t1" mindar-image-target="targetIndex: 1">
       <a-plane
         id="p1"
@@ -206,7 +203,7 @@
     const helpBtn = document.getElementById("helpBtn");
     const status = document.getElementById("status");
     const page = document.getElementById("page");
-    const scene = document.querySelector("a-scene");
+    const scene = document.getElementById("arScene");
 
     const t0 = document.getElementById("t0");
     const t1 = document.getElementById("t1");
@@ -218,6 +215,7 @@
     const v2 = document.getElementById("v2");
 
     let activeIdx = null;
+    let sceneReady = false;
 
     const targetInfo = {
       0: { video: v1, plane: p0, name: "Lo Chef presenta" },
@@ -258,8 +256,25 @@
           await v.play();
           v.pause();
           v.currentTime = 0;
-        } catch (e) {}
+        } catch (e) {
+          console.log("unlock skip", e);
+        }
       }
+    }
+
+    function waitForSceneReady() {
+      return new Promise((resolve) => {
+        if (scene.hasLoaded) {
+          sceneReady = true;
+          resolve();
+          return;
+        }
+
+        scene.addEventListener("loaded", () => {
+          sceneReady = true;
+          resolve();
+        }, { once: true });
+      });
     }
 
     const audioBtn = document.createElement("button");
@@ -285,6 +300,7 @@
         audioBtn.style.display = "none";
       } catch (e) {
         console.error("Errore audio:", e);
+        alert("Audio non avviato");
       }
     });
 
@@ -292,15 +308,32 @@
       alert(
         "1) Tocca 'Avvia esperienza'\n" +
         "2) Consenti la fotocamera\n" +
-        "3) Inquadra il target della copertina oppure il target della pagina menu"
+        "3) Inquadra la copertina oppure la pagina menu"
       );
     });
 
     startBtn.addEventListener("click", async () => {
-      await unlockVideos();
-      await scene.systems["mindar-image-system"].start();
-      ui.style.display = "none";
-      setStatus("Inquadra una pagina ✨");
+      try {
+        setStatus("Carico scena...");
+        await waitForSceneReady();
+
+        if (!scene.systems["mindar-image-system"]) {
+          throw new Error("mindar-image-system non disponibile");
+        }
+
+        setStatus("Sblocco video...");
+        await unlockVideos();
+
+        setStatus("Avvio camera...");
+        await scene.systems["mindar-image-system"].start();
+
+        ui.style.display = "none";
+        setStatus("Inquadra una pagina ✨");
+      } catch (e) {
+        console.error("Errore start:", e);
+        setStatus("Errore avvio");
+        alert("Avvio non riuscito. Controlla targets.mind e fotocamera.");
+      }
     });
 
     async function handleFound(idx) {
