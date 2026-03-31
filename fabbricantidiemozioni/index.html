@@ -37,7 +37,7 @@
       align-items: center;
       justify-content: center;
       z-index: 20;
-      background: rgba(0,0,0,.92);
+      background: rgba(0,0,0,.88);
       padding: 20px;
       box-sizing: border-box;
     }
@@ -96,7 +96,7 @@
   <div class="overlay" id="ui">
     <div class="card">
       <h3>Pasqua AR Experience</h3>
-      <p>Tocca “Avvia” e inquadra il biglietto di Pasqua.</p>
+      <p>Tocca “Avvia” e inquadra il biglietto.</p>
       <button class="btn" id="startBtn">Avvia</button>
     </div>
   </div>
@@ -121,9 +121,9 @@
       </video>
     </a-assets>
 
-    <a-camera id="camera" position="0 0 0" look-controls="enabled:false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <!-- Target AR -->
+    <!-- Piano agganciato al target -->
     <a-entity id="target" mindar-image-target="targetIndex:0">
       <a-plane
         id="trackingPlane"
@@ -131,19 +131,18 @@
         height="1.5"
         position="0 0.2 0"
         visible="false"
-        material="shader: flat; src:#video; transparent:true">
+        material="shader: flat; src:#video; transparent:true; side:double">
       </a-plane>
     </a-entity>
 
-    <!-- Piano sganciato dal tracking, fisso nello schermo/spazio camera -->
-    <a-entity id="screenAnchor" position="0 0 -2.2" visible="false">
-      <a-plane
-        id="screenPlane"
-        width="1.4"
-        height="2.1"
-        material="shader: flat; src:#video; transparent:true">
-      </a-plane>
-    </a-entity>
+    <!-- Piano sganciato e indipendente -->
+    <a-plane
+      id="frozenPlane"
+      width="1"
+      height="1.5"
+      visible="false"
+      material="shader: flat; src:#video; transparent:true; side:double">
+    </a-plane>
 
   </a-scene>
 
@@ -152,23 +151,23 @@
     const ui = document.getElementById("ui");
     const status = document.getElementById("status");
 
-    const scene = document.querySelector("a-scene");
-    const camera = document.getElementById("camera");
-    const target = document.getElementById("target");
-    const video = document.getElementById("video");
+    const sceneEl = document.querySelector("a-scene");
+    const targetEl = document.getElementById("target");
     const trackingPlane = document.getElementById("trackingPlane");
-    const screenAnchor = document.getElementById("screenAnchor");
+    const frozenPlane = document.getElementById("frozenPlane");
+    const video = document.getElementById("video");
 
     let experienceStarted = false;
-    let detached = false;
+    let frozen = false;
+    let freezeTimer = null;
 
     function setStatus(text) {
       status.innerText = text;
     }
 
-    async function startAr() {
+    async function startAR() {
       try {
-        await scene.systems["mindar-image-system"].start();
+        await sceneEl.systems["mindar-image-system"].start();
         ui.style.display = "none";
         setStatus("Inquadra il target");
       } catch (err) {
@@ -177,51 +176,67 @@
       }
     }
 
-    async function playVideoOnce() {
+    async function playVideo() {
       try {
         video.currentTime = 0;
         await video.play();
-      } catch (e) {
-        console.error("Errore play video:", e);
+      } catch (err) {
+        console.error("Errore play video:", err);
       }
     }
 
-    function detachToScreen() {
-      if (detached) return;
-      detached = true;
+    function copyWorldTransformToFrozenPlane() {
+      const source = trackingPlane.object3D;
+      const dest = frozenPlane.object3D;
 
+      source.updateMatrixWorld(true);
+
+      const pos = new THREE.Vector3();
+      const quat = new THREE.Quaternion();
+      const scale = new THREE.Vector3();
+
+      source.matrixWorld.decompose(pos, quat, scale);
+
+      dest.position.copy(pos);
+      dest.quaternion.copy(quat);
+      dest.scale.copy(scale);
+
+      frozenPlane.setAttribute("visible", true);
       trackingPlane.setAttribute("visible", false);
 
-      if (!camera.contains(screenAnchor)) {
-        camera.appendChild(screenAnchor);
-      }
-
-      screenAnchor.setAttribute("visible", true);
+      frozen = true;
       setStatus("Video in riproduzione");
     }
 
     startBtn.addEventListener("click", async () => {
-      await startAr();
+      await startAR();
     });
 
-    target.addEventListener("targetFound", async () => {
-      if (experienceStarted) return;
-
-      experienceStarted = true;
-
-      trackingPlane.setAttribute("visible", true);
+    targetEl.addEventListener("targetFound", async () => {
       setStatus("Target rilevato");
 
-      await playVideoOnce();
+      if (!experienceStarted) {
+        experienceStarted = true;
+        trackingPlane.setAttribute("visible", true);
+        await playVideo();
+      }
 
-      setTimeout(() => {
-        detachToScreen();
-      }, 250);
+      if (!frozen) {
+        trackingPlane.setAttribute("visible", true);
+
+        if (freezeTimer) clearTimeout(freezeTimer);
+
+        freezeTimer = setTimeout(() => {
+          copyWorldTransformToFrozenPlane();
+        }, 700);
+      }
     });
 
-    target.addEventListener("targetLost", () => {
-      // ignorato apposta:
-      // dopo il primo aggancio il video resta fisso e non vibra
+    targetEl.addEventListener("targetLost", () => {
+      if (!frozen) {
+        setStatus("Target perso, riprova");
+        trackingPlane.setAttribute("visible", false);
+      }
     });
 
     video.addEventListener("ended", () => {
