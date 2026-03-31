@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Pasqua AR – FDE</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, sans-serif;
+    }
+
+    a-scene {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    canvas.a-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      background: rgba(0,0,0,.92);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 18px 50px rgba(0,0,0,.25);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
+    .card p {
+      margin-bottom: 18px;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 999px;
+      background: #d4a24b;
+      color: #000;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .badge {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,.85);
+      padding: 8px 12px;
+      border-radius: 999px;
+      z-index: 30;
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="badge" id="status">AR pronta</div>
+
+  <div class="overlay" id="ui">
+    <div class="card">
+      <h3>Pasqua AR Experience</h3>
+      <p>Tocca “Avvia” e inquadra il biglietto di Pasqua.</p>
+      <button class="btn" id="startBtn">Avvia</button>
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart:false;"
+    embedded
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled:false"
+    device-orientation-permission-ui="enabled:false">
+
+    <a-assets>
+      <video
+        id="video"
+        src="https://video.wixstatic.com/video/047e10_5d5a2c573f914737b9e82d3448cd9348/360p/mp4/file.mp4"
+        preload="auto"
+        playsinline
+        webkit-playsinline
+        muted
+        crossorigin="anonymous">
+      </video>
+    </a-assets>
+
+    <a-camera id="camera" position="0 0 0" look-controls="enabled:false"></a-camera>
+
+    <!-- Target AR -->
+    <a-entity id="target" mindar-image-target="targetIndex:0">
+      <a-plane
+        id="trackingPlane"
+        width="1"
+        height="1.5"
+        position="0 0.2 0"
+        visible="false"
+        material="shader: flat; src:#video; transparent:true">
+      </a-plane>
+    </a-entity>
+
+    <!-- Piano sganciato dal tracking, fisso nello schermo/spazio camera -->
+    <a-entity id="screenAnchor" position="0 0 -2.2" visible="false">
+      <a-plane
+        id="screenPlane"
+        width="1.4"
+        height="2.1"
+        material="shader: flat; src:#video; transparent:true">
+      </a-plane>
+    </a-entity>
+
+  </a-scene>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const ui = document.getElementById("ui");
+    const status = document.getElementById("status");
+
+    const scene = document.querySelector("a-scene");
+    const camera = document.getElementById("camera");
+    const target = document.getElementById("target");
+    const video = document.getElementById("video");
+    const trackingPlane = document.getElementById("trackingPlane");
+    const screenAnchor = document.getElementById("screenAnchor");
+
+    let experienceStarted = false;
+    let detached = false;
+
+    function setStatus(text) {
+      status.innerText = text;
+    }
+
+    async function startAr() {
+      try {
+        await scene.systems["mindar-image-system"].start();
+        ui.style.display = "none";
+        setStatus("Inquadra il target");
+      } catch (err) {
+        console.error(err);
+        setStatus("Errore avvio AR");
+      }
+    }
+
+    async function playVideoOnce() {
+      try {
+        video.currentTime = 0;
+        await video.play();
+      } catch (e) {
+        console.error("Errore play video:", e);
+      }
+    }
+
+    function detachToScreen() {
+      if (detached) return;
+      detached = true;
+
+      trackingPlane.setAttribute("visible", false);
+
+      if (!camera.contains(screenAnchor)) {
+        camera.appendChild(screenAnchor);
+      }
+
+      screenAnchor.setAttribute("visible", true);
+      setStatus("Video in riproduzione");
+    }
+
+    startBtn.addEventListener("click", async () => {
+      await startAr();
+    });
+
+    target.addEventListener("targetFound", async () => {
+      if (experienceStarted) return;
+
+      experienceStarted = true;
+
+      trackingPlane.setAttribute("visible", true);
+      setStatus("Target rilevato");
+
+      await playVideoOnce();
+
+      setTimeout(() => {
+        detachToScreen();
+      }, 250);
+    });
+
+    target.addEventListener("targetLost", () => {
+      // ignorato apposta:
+      // dopo il primo aggancio il video resta fisso e non vibra
+    });
+
+    video.addEventListener("ended", () => {
+      setStatus("Esperienza terminata");
+    });
+  </script>
+
+</body>
+</html>
