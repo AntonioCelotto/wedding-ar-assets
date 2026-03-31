@@ -14,8 +14,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: Arial, sans-serif;
       background: transparent;
+      font-family: Arial, sans-serif;
     }
 
     a-scene {
@@ -30,24 +30,17 @@
       height: 100vh !important;
     }
 
-    .hud {
-      position: fixed;
-      inset: 0;
-      z-index: 30;
-      pointer-events: none;
-    }
-
     .status {
       position: fixed;
-      top: 12px;
-      left: 12px;
+      top: 10px;
+      left: 10px;
       background: rgba(255,255,255,.82);
       color: #111;
       padding: 8px 12px;
       border-radius: 999px;
+      z-index: 30;
       font-size: 14px;
       font-weight: 600;
-      pointer-events: none;
     }
 
     .controls {
@@ -55,11 +48,11 @@
       left: 50%;
       bottom: 24px;
       transform: translateX(-50%);
+      z-index: 30;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 10px;
-      pointer-events: auto;
     }
 
     .hint {
@@ -94,13 +87,11 @@
 
 <body>
 
-  <div class="hud">
-    <div class="status" id="status">AR pronta</div>
+  <div class="status" id="status">AR pronta</div>
 
-    <div class="controls" id="controls">
-      <div class="hint" id="hint">Tocca “Avvia” e inquadra il biglietto di Pasqua.</div>
-      <button class="btn" id="startBtn">Avvia esperienza</button>
-    </div>
+  <div class="controls" id="controls">
+    <div class="hint" id="hint">Tocca “Avvia esperienza” e inquadra il target.</div>
+    <button class="btn" id="startBtn">Avvia esperienza</button>
   </div>
 
   <a-scene
@@ -114,29 +105,25 @@
     <a-assets>
       <video
         id="video"
-        src="https://video.wixstatic.com/video/047e10_5d5a2c573f914737b9e82d3448cd9348/360p/mp4/file.mp4"
+        src="https://video.wixstatic.com/video/047e10_81895633e5a449a080cbd1dac2523d5e/1080p/mp4/file.mp4"
         preload="auto"
         playsinline
         webkit-playsinline
-        muted
-        loop
         crossorigin="anonymous">
       </video>
     </a-assets>
 
     <a-camera id="camera" position="0 0 0" look-controls="enabled:false">
-      <!-- Piano fisso, frontale, dritto -->
       <a-plane
         id="screenPlane"
-        width="1.15"
-        height="1.72"
+        width="0.95"
+        height="1.69"
         position="0 0 -1.9"
         visible="false"
         material="shader: flat; src:#video; transparent:true; side:double">
       </a-plane>
     </a-camera>
 
-    <!-- Target usato solo come trigger iniziale -->
     <a-entity id="target" mindar-image-target="targetIndex:0"></a-entity>
 
   </a-scene>
@@ -154,9 +141,26 @@
 
     let arStarted = false;
     let experienceTriggered = false;
+    let mediaUnlocked = false;
 
     function setStatus(text) {
       status.textContent = text;
+    }
+
+    async function unlockMedia() {
+      if (mediaUnlocked) return;
+
+      try {
+        video.muted = true;
+        video.currentTime = 0;
+        await video.play();
+        video.pause();
+        video.currentTime = 0;
+        video.muted = false;
+        mediaUnlocked = true;
+      } catch (err) {
+        console.error("Errore sblocco media:", err);
+      }
     }
 
     async function startAR() {
@@ -174,9 +178,11 @@
       }
     }
 
-    async function playLoopVideo() {
+    async function playVideoWithAudio() {
       try {
+        video.pause();
         video.currentTime = 0;
+        video.muted = false;
         await video.play();
       } catch (err) {
         console.error("Errore play video:", err);
@@ -184,6 +190,7 @@
     }
 
     startBtn.addEventListener("click", async () => {
+      await unlockMedia();
       await startAR();
       startBtn.classList.add("hidden");
     });
@@ -196,9 +203,8 @@
       setStatus("Target rilevato");
       hint.textContent = "Esperienza avviata";
 
-      await playLoopVideo();
-
       screenPlane.setAttribute("visible", true);
+      await playVideoWithAudio();
 
       setTimeout(() => {
         controls.classList.add("hidden");
@@ -207,17 +213,11 @@
 
     targetEl.addEventListener("targetLost", () => {
       // ignorato volutamente:
-      // il video resta fisso, dritto e stabile davanti allo schermo
+      // il video resta fisso e continua fino alla fine
     });
 
-    video.addEventListener("ended", async () => {
-      // fallback nel caso qualche browser ignori loop
-      try {
-        video.currentTime = 0;
-        await video.play();
-      } catch (err) {
-        console.error("Errore loop fallback:", err);
-      }
+    video.addEventListener("ended", () => {
+      setStatus("Video terminato");
     });
   </script>
 
