@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Auguri di Pasqua AR – Fabbricanti di Emozioni</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -40,222 +40,249 @@
       align-items: center;
       justify-content: center;
       z-index: 20;
-      background: linear-gradient(#fff1c9, #f6d998);
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 25%, rgba(255,255,255,.20), rgba(255,255,255,0) 55%),
+        linear-gradient(180deg, #fff4d9 0%, #f6d998 100%);
     }
 
     .card {
-      width: min(520px, 100%);
+      width: min(560px, 100%);
       background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.75);
       border-radius: 22px;
-      padding: 20px;
+      padding: 18px;
       text-align: center;
-      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+      box-shadow: 0 18px 55px rgba(0,0,0,.20);
+      backdrop-filter: blur(10px);
     }
 
-    .card h2 {
-      margin-top: 0;
+    .title {
+      margin: 2px 0 6px;
+      font-size: 22px;
+      font-weight: 900;
       color: #7a4f00;
     }
 
-    .card p {
-      color: #5f4308;
-      line-height: 1.5;
+    .sub {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: rgba(80,55,8,.85);
+      line-height: 1.45;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
     .btn {
       border: none;
       border-radius: 999px;
       padding: 12px 18px;
-      font-weight: 800;
+      font-weight: 900;
       cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
       background: #d49a24;
       color: white;
       font-size: 16px;
     }
 
-    .badge {
+    .pill {
       position: fixed;
       top: 10px;
       left: 10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.75);
-      font-size: 14px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
       z-index: 30;
-      color: #6a4a00;
-      font-weight: 600;
-    }
-
-    .play-panel {
-      position: fixed;
-      left: 50%;
-      bottom: 22px;
-      transform: translateX(-50%);
-      z-index: 35;
-      display: none;
-      background: rgba(255,255,255,.94);
-      border-radius: 20px;
-      padding: 14px 16px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.18);
-      text-align: center;
-      width: min(360px, calc(100vw - 24px));
-    }
-
-    .play-panel p {
-      margin: 0 0 10px 0;
-      color: #5f4308;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    .video-layer {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
       pointer-events: none;
     }
 
-    .video-wrap {
-      width: min(72vw, 360px);
-      aspect-ratio: 9 / 16;
-      display: flex;
+    .badge {
+      pointer-events: auto;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.76);
+      border: 1px solid rgba(255,255,255,.92);
+      color: rgba(80,55,8,.9);
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
     }
 
-    #auguriVideo {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 18px;
-      background: transparent;
-      box-shadow: 0 18px 50px rgba(0,0,0,.22);
-      pointer-events: auto;
+    .badge strong {
+      color: #7a4f00;
+      font-weight: 900;
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="badge" id="status">AR pronta</div>
+<div class="pill">
+  <div class="badge" id="status"><strong>AR</strong> Pronta ✨</div>
+  <div class="badge hidden" id="page">Inquadra il biglietto</div>
+</div>
 
-  <div class="overlay" id="ui">
-    <div class="card">
-      <h2>Auguri di Pasqua AR</h2>
-      <p><strong>Fabbricanti di Emozioni</strong></p>
-      <p>Tocca avvia e inquadra il biglietto di Pasqua.</p>
+<div class="overlay" id="ui">
+  <div class="card">
+    <div class="title">Auguri di Pasqua AR</div>
+    <div class="sub"><strong>Fabbricanti di Emozioni</strong></div>
+    <div class="sub">Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra il biglietto di Pasqua.</div>
+    <div class="row">
       <button class="btn" id="startBtn">Avvia esperienza</button>
     </div>
-  </div>
-
-  <div class="play-panel" id="playPanel">
-    <p>Target rilevato</p>
-    <button class="btn" id="playBtn">Riproduci auguri</button>
-  </div>
-
-  <div class="video-layer" id="videoLayer">
-    <div class="video-wrap">
-      <video
-        id="auguriVideo"
-        playsinline
-        webkit-playsinline
-        preload="auto"
-        crossorigin="anonymous">
-        <source src="https://video.wixstatic.com/video/047e10_81895633e5a449a080cbd1dac2523d5e/1080p/mp4/file.mp4" type="video/mp4">
-      </video>
+    <div class="sub" style="margin-top:10px;font-size:12.5px;">
+      Consiglio: luce buona + target fermo per 1–2 secondi.
     </div>
   </div>
+</div>
 
-  <a-scene
-    mindar-image="imageTargetSrc: targets.mind; autoStart:false;"
-    embedded
-    vr-mode-ui="enabled:false"
-    device-orientation-permission-ui="enabled:false">
+<a-scene
+  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+  embedded
+  vr-mode-ui="enabled:false"
+  device-orientation-permission-ui="enabled:false">
 
-    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+  <a-assets>
+    <video
+      id="v1"
+      crossorigin="anonymous"
+      src="https://video.wixstatic.com/video/047e10_81895633e5a449a080cbd1dac2523d5e/1080p/mp4/file.mp4"
+      preload="auto"
+      playsinline
+      webkit-playsinline
+      muted>
+    </video>
+  </a-assets>
 
-    <!-- Un solo target -->
-    <a-entity id="target0" mindar-image-target="targetIndex:0"></a-entity>
+  <a-camera id="cam" position="0 0 0" look-controls="enabled:false">
+    <!-- Video verticale, fisso e frontale -->
+    <a-entity id="fixedVideo" visible="false">
+      <a-plane
+        id="fixedPlane"
+        width="0.95"
+        height="1.69"
+        position="0 0 -1.35"
+        rotation="0 0 0"
+        material="shader: flat; src: #v1; transparent: true; side: double">
+      </a-plane>
+    </a-entity>
+  </a-camera>
 
-  </a-scene>
+  <!-- Un solo target -->
+  <a-entity id="t0" mindar-image-target="targetIndex: 0"></a-entity>
 
-  <script>
-    const startBtn = document.getElementById("startBtn");
-    const playBtn = document.getElementById("playBtn");
-    const ui = document.getElementById("ui");
-    const status = document.getElementById("status");
-    const playPanel = document.getElementById("playPanel");
-    const videoLayer = document.getElementById("videoLayer");
-    const auguriVideo = document.getElementById("auguriVideo");
-    const scene = document.querySelector("a-scene");
-    const target0 = document.getElementById("target0");
+</a-scene>
 
-    let arStarted = false;
-    let targetDetected = false;
-    let videoStarted = false;
+<script>
+  const ui = document.getElementById("ui");
+  const startBtn = document.getElementById("startBtn");
+  const status = document.getElementById("status");
+  const page = document.getElementById("page");
 
-    function setStatus(text) {
-      status.innerText = text;
+  const scene = document.querySelector("a-scene");
+  const target = document.getElementById("t0");
+  const v1 = document.getElementById("v1");
+
+  const fixedVideo = document.getElementById("fixedVideo");
+  const fixedPlane = document.getElementById("fixedPlane");
+
+  function setStatus(text) {
+    status.textContent = "AR " + text;
+  }
+
+  function stopVideo() {
+    try {
+      v1.pause();
+      v1.currentTime = 0;
+    } catch(e) {}
+  }
+
+  async function unlockVideo() {
+    try {
+      v1.muted = true;
+      await v1.play();
+      v1.pause();
+      v1.currentTime = 0;
+    } catch(e) {}
+  }
+
+  function showFixedVideo() {
+    fixedVideo.setAttribute("visible", true);
+
+    fixedPlane.setAttribute("scale", "0.001 0.001 0.001");
+    fixedPlane.setAttribute("animation__in", `
+      property: scale;
+      to: 1 1 1;
+      dur: 220;
+      easing: easeOutQuad;
+    `);
+  }
+
+  function hideFixedVideo() {
+    fixedPlane.setAttribute("animation__out", `
+      property: scale;
+      to: 0.001 0.001 0.001;
+      dur: 140;
+      easing: easeInQuad;
+    `);
+
+    setTimeout(() => {
+      fixedVideo.setAttribute("visible", false);
+      fixedPlane.setAttribute("scale", "1 1 1");
+    }, 150);
+  }
+
+  startBtn.addEventListener("click", async () => {
+    await unlockVideo();
+    await scene.systems["mindar-image-system"].start();
+    ui.style.display = "none";
+    setStatus("Inquadra il biglietto ✨");
+    page.classList.remove("hidden");
+    page.textContent = "Inquadra il biglietto";
+  });
+
+  target.addEventListener("targetFound", async () => {
+    setStatus("Trovato ✅");
+    page.textContent = "In riproduzione…";
+
+    showFixedVideo();
+
+    stopVideo();
+    try {
+      v1.muted = true;
+      await v1.play();
+    } catch(e) {
+      console.error("video play:", e);
     }
+  });
 
-    startBtn.onclick = async () => {
-      try {
-        if (!arStarted) {
-          await scene.systems["mindar-image-system"].start();
-          arStarted = true;
-        }
-        ui.style.display = "none";
-        setStatus("Inquadra il biglietto");
-      } catch (e) {
-        console.error("start ar:", e);
-        setStatus("Errore avvio AR");
-      }
-    };
+  target.addEventListener("targetLost", () => {
+    setStatus("Inquadra il biglietto ✨");
+    page.textContent = "Inquadra il biglietto";
 
-    target0.addEventListener("targetFound", () => {
-      if (videoStarted) return;
+    hideFixedVideo();
+    stopVideo();
+  });
 
-      targetDetected = true;
-      playPanel.style.display = "block";
-      setStatus("Target rilevato");
-    });
-
-    target0.addEventListener("targetLost", () => {
-      if (!videoStarted) {
-        setStatus("Target perso");
-      }
-    });
-
-    playBtn.onclick = async () => {
-      if (!targetDetected) {
-        setStatus("Inquadra prima il target");
-        return;
-      }
-
-      try {
-        auguriVideo.pause();
-        auguriVideo.currentTime = 0;
-
-        videoLayer.style.display = "flex";
-        playPanel.style.display = "none";
-
-        await auguriVideo.play();
-
-        videoStarted = true;
-        setStatus("Auguri in riproduzione");
-      } catch (e) {
-        console.error("video play:", e);
-        setStatus("Errore riproduzione video");
-      }
-    };
-
-    auguriVideo.addEventListener("ended", () => {
-      setStatus("Esperienza terminata");
-    });
-  </script>
+  v1.addEventListener("ended", () => {
+    setStatus("Esperienza terminata");
+    page.textContent = "Video terminato";
+    hideFixedVideo();
+  });
+</script>
 
 </body>
 </html>
