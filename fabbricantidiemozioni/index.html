@@ -15,11 +15,10 @@
       height: 100%;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background: transparent;
     }
 
     body {
-      background: linear-gradient(#fff4d9, #f7ddb0);
+      background: linear-gradient(#fff1c9, #f6d998);
     }
 
     a-scene {
@@ -41,30 +40,26 @@
       align-items: center;
       justify-content: center;
       z-index: 20;
-      background: linear-gradient(#fff4d9, #f7ddb0);
-      padding: 18px;
-      box-sizing: border-box;
+      background: linear-gradient(#fff1c9, #f6d998);
     }
 
     .card {
       width: min(520px, 100%);
       background: rgba(255,255,255,.92);
       border-radius: 22px;
-      padding: 22px;
+      padding: 20px;
       text-align: center;
       box-shadow: 0 18px 50px rgba(0,0,0,.18);
     }
 
     .card h2 {
-      margin: 0 0 10px 0;
-      font-size: 26px;
-      color: #6f4b12;
+      margin-top: 0;
+      color: #7a4f00;
     }
 
     .card p {
-      margin: 0 0 16px 0;
+      color: #5f4308;
       line-height: 1.5;
-      color: #4d3b1e;
     }
 
     .btn {
@@ -73,15 +68,9 @@
       padding: 12px 18px;
       font-weight: 800;
       cursor: pointer;
-      background: #d4a24b;
-      color: #1d1405;
-      font-size: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.15);
-    }
-
-    .btn.secondary {
-      background: #8f5b12;
+      background: #d49a24;
       color: white;
+      font-size: 16px;
     }
 
     .badge {
@@ -90,36 +79,61 @@
       left: 10px;
       padding: 10px 14px;
       border-radius: 999px;
-      background: rgba(255,255,255,.78);
+      background: rgba(255,255,255,.75);
       font-size: 14px;
       z-index: 30;
+      color: #6a4a00;
       font-weight: 600;
-      color: #4d3b1e;
     }
 
-    .mini-panel {
+    .play-panel {
       position: fixed;
       left: 50%;
       bottom: 22px;
       transform: translateX(-50%);
-      z-index: 30;
-      background: rgba(255,255,255,.92);
-      border-radius: 18px;
-      padding: 14px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.18);
+      z-index: 35;
       display: none;
-      width: min(420px, calc(100vw - 24px));
+      background: rgba(255,255,255,.94);
+      border-radius: 20px;
+      padding: 14px 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.18);
       text-align: center;
+      width: min(360px, calc(100vw - 24px));
     }
 
-    .mini-panel p {
-      margin: 0 0 12px 0;
-      color: #4d3b1e;
+    .play-panel p {
+      margin: 0 0 10px 0;
+      color: #5f4308;
+      font-size: 14px;
       line-height: 1.4;
     }
 
-    .hidden {
-      display: none !important;
+    .video-layer {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      pointer-events: none;
+    }
+
+    .video-wrap {
+      width: min(72vw, 360px);
+      aspect-ratio: 9 / 16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #auguriVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 18px;
+      background: transparent;
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      pointer-events: auto;
     }
   </style>
 </head>
@@ -130,130 +144,116 @@
 
   <div class="overlay" id="ui">
     <div class="card">
-      <h2>Pasqua AR Experience</h2>
+      <h2>Auguri di Pasqua AR</h2>
       <p><strong>Fabbricanti di Emozioni</strong></p>
       <p>Tocca avvia e inquadra il biglietto di Pasqua per sbloccare il video di auguri.</p>
       <button class="btn" id="startBtn">Avvia esperienza</button>
     </div>
   </div>
 
-  <div class="mini-panel" id="playPanel">
-    <p>Target rilevato. Tocca qui per riprodurre il video di auguri.</p>
-    <button class="btn secondary" id="playBtn">Riproduci auguri</button>
+  <div class="play-panel" id="playPanel">
+    <p>Target rilevato</p>
+    <button class="btn" id="playBtn">Riproduci auguri</button>
+  </div>
+
+  <div class="video-layer" id="videoLayer">
+    <div class="video-wrap">
+      <video
+        id="auguriVideo"
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        crossorigin="anonymous">
+        <source src="https://video.wixstatic.com/video/047e10_81895633e5a449a080cbd1dac2523d5e/1080p/mp4/file.mp4" type="video/mp4">
+      </video>
+    </div>
   </div>
 
   <a-scene
     mindar-image="imageTargetSrc: targets.mind; autoStart:false;"
     embedded
-    renderer="alpha:true; colorManagement:true, physicallyCorrectLights"
-    color-space="sRGB"
     vr-mode-ui="enabled:false"
     device-orientation-permission-ui="enabled:false">
 
-    <a-assets>
-      <video
-        id="video"
-        src="https://video.wixstatic.com/video/047e10_81895633e5a449a080cbd1dac2523d5e/1080p/mp4/file.mp4"
-        preload="auto"
-        playsinline
-        webkit-playsinline
-        crossorigin="anonymous">
-      </video>
-    </a-assets>
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <a-camera id="camera" position="0 0 0" look-controls="enabled:false">
-      <a-plane
-        id="screenPlane"
-        width="0.95"
-        height="1.69"
-        position="0 0 -1.9"
-        visible="false"
-        material="shader: flat; src:#video; transparent:true; side:double">
-      </a-plane>
-    </a-camera>
+    <!-- Un solo target -->
+    <a-entity id="target0" mindar-image-target="targetIndex:0"></a-entity>
 
-    <a-entity id="target" mindar-image-target="targetIndex:0"></a-entity>
   </a-scene>
 
   <script>
     const startBtn = document.getElementById("startBtn");
     const playBtn = document.getElementById("playBtn");
     const ui = document.getElementById("ui");
-    const playPanel = document.getElementById("playPanel");
     const status = document.getElementById("status");
-
-    const sceneEl = document.querySelector("a-scene");
-    const targetEl = document.getElementById("target");
-    const screenPlane = document.getElementById("screenPlane");
-    const video = document.getElementById("video");
+    const playPanel = document.getElementById("playPanel");
+    const videoLayer = document.getElementById("videoLayer");
+    const auguriVideo = document.getElementById("auguriVideo");
+    const scene = document.querySelector("a-scene");
+    const target0 = document.getElementById("target0");
 
     let arStarted = false;
-    let targetSeen = false;
+    let targetDetected = false;
     let videoStarted = false;
 
     function setStatus(text) {
-      status.textContent = text;
+      status.innerText = text;
     }
 
-    async function startAR() {
-      if (arStarted) return;
-      arStarted = true;
-
+    startBtn.onclick = async () => {
       try {
-        await sceneEl.systems["mindar-image-system"].start();
-        ui.classList.add("hidden");
+        if (!arStarted) {
+          await scene.systems["mindar-image-system"].start();
+          arStarted = true;
+        }
+        ui.style.display = "none";
         setStatus("Inquadra il biglietto");
-      } catch (err) {
-        console.error(err);
+      } catch (e) {
+        console.error("start ar:", e);
         setStatus("Errore avvio AR");
       }
-    }
+    };
 
-    async function playVideo() {
+    target0.addEventListener("targetFound", () => {
       if (videoStarted) return;
 
-      try {
-        video.pause();
-        video.currentTime = 0;
-        screenPlane.setAttribute("visible", true);
-        await video.play();
-        videoStarted = true;
-        playPanel.style.display = "none";
-        setStatus("Auguri in riproduzione");
-      } catch (err) {
-        console.error("Errore play video:", err);
-        setStatus("Tocca di nuovo per riprodurre");
-      }
-    }
-
-    startBtn.addEventListener("click", async () => {
-      await startAR();
-    });
-
-    targetEl.addEventListener("targetFound", () => {
-      if (videoStarted) return;
-
-      targetSeen = true;
+      targetDetected = true;
       playPanel.style.display = "block";
       setStatus("Target rilevato");
     });
 
-    targetEl.addEventListener("targetLost", () => {
+    target0.addEventListener("targetLost", () => {
       if (!videoStarted) {
         setStatus("Target perso");
       }
     });
 
-    playBtn.addEventListener("click", async () => {
-      if (!targetSeen) {
+    playBtn.onclick = async () => {
+      if (!targetDetected) {
         setStatus("Inquadra prima il target");
         return;
       }
-      await playVideo();
-    });
 
-    video.addEventListener("ended", () => {
-      setStatus("Video terminato");
+      try {
+        auguriVideo.pause();
+        auguriVideo.currentTime = 0;
+
+        videoLayer.style.display = "flex";
+        playPanel.style.display = "none";
+
+        await auguriVideo.play();
+
+        videoStarted = true;
+        setStatus("Auguri in riproduzione");
+      } catch (e) {
+        console.error("video play:", e);
+        setStatus("Errore riproduzione video");
+      }
+    };
+
+    auguriVideo.addEventListener("ended", () => {
+      setStatus("Esperienza terminata");
     });
   </script>
 
