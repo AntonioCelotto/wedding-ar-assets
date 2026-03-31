@@ -127,28 +127,34 @@
       display: none !important;
     }
 
-    /* VIDEO HTML sopra la camera */
     .video-layer {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       z-index: 25;
       display: none;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
+      padding-top: 8vh;
+      box-sizing: border-box;
       pointer-events: none;
     }
 
     .video-wrap {
+      position: relative;
       width: min(80vw, 380px);
+      height: auto;
       aspect-ratio: 9 / 16;
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transform: scale(0.72) translateY(36px);
+      transform: scale(0.75) translateY(40px);
       transition:
         transform 420ms cubic-bezier(.2,.8,.2,1),
-        opacity 300ms ease-out;
+        opacity 320ms ease-out;
       will-change: transform, opacity;
     }
 
@@ -169,12 +175,10 @@
         0 0 0 1px rgba(255,255,255,.18) inset;
     }
 
-    /* piccolo glow dietro per effetto premium */
     .video-wrap::before {
       content: "";
       position: absolute;
-      width: 82%;
-      height: 82%;
+      inset: 8%;
       border-radius: 28px;
       background: radial-gradient(circle, rgba(255,215,120,.30), rgba(255,215,120,0) 70%);
       filter: blur(16px);
@@ -253,7 +257,6 @@
     const scene = document.querySelector("a-scene");
     const target = document.getElementById("t0");
 
-    let arStarted = false;
     let experienceStarted = false;
 
     function setStatus(text) {
@@ -337,7 +340,6 @@
       try {
         await unlockMedia();
         await scene.systems["mindar-image-system"].start();
-        arStarted = true;
         ui.style.display = "none";
         setStatus("Inquadra il biglietto ✨");
         page.classList.remove("hidden");
@@ -354,7 +356,7 @@
 
     target.addEventListener("targetLost", () => {
       // ignorato volutamente:
-      // una volta trovato, il video continua fino alla fine
+      // una volta trovato, video e audio continuano fino alla fine
     });
 
     auguriVideo.addEventListener("ended", () => {
