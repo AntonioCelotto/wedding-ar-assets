@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Pasqua AR – FDE</title>
+  <title>Auguri di Pasqua AR – Fabbricanti di Emozioni</title>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -14,8 +14,12 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       background: transparent;
-      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(#fff4d9, #f7ddb0);
     }
 
     a-scene {
@@ -30,53 +34,88 @@
       height: 100vh !important;
     }
 
-    .status {
+    .overlay {
       position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(255,255,255,.82);
-      color: #111;
-      padding: 8px 12px;
-      border-radius: 999px;
-      z-index: 30;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .controls {
-      position: fixed;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%);
-      z-index: 30;
+      inset: 0;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      z-index: 20;
+      background: linear-gradient(#fff4d9, #f7ddb0);
+      padding: 18px;
+      box-sizing: border-box;
     }
 
-    .hint {
-      background: rgba(0,0,0,.55);
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 14px;
-      font-size: 14px;
+    .card {
+      width: min(520px, 100%);
+      background: rgba(255,255,255,.92);
+      border-radius: 22px;
+      padding: 22px;
       text-align: center;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      max-width: 90vw;
+      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+    }
+
+    .card h2 {
+      margin: 0 0 10px 0;
+      font-size: 26px;
+      color: #6f4b12;
+    }
+
+    .card p {
+      margin: 0 0 16px 0;
+      line-height: 1.5;
+      color: #4d3b1e;
     }
 
     .btn {
       border: none;
       border-radius: 999px;
-      padding: 12px 20px;
-      font-size: 16px;
+      padding: 12px 18px;
       font-weight: 800;
       cursor: pointer;
       background: #d4a24b;
-      color: #111;
-      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      color: #1d1405;
+      font-size: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    }
+
+    .btn.secondary {
+      background: #8f5b12;
+      color: white;
+    }
+
+    .badge {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      font-size: 14px;
+      z-index: 30;
+      font-weight: 600;
+      color: #4d3b1e;
+    }
+
+    .mini-panel {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      z-index: 30;
+      background: rgba(255,255,255,.92);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.18);
+      display: none;
+      width: min(420px, calc(100vw - 24px));
+      text-align: center;
+    }
+
+    .mini-panel p {
+      margin: 0 0 12px 0;
+      color: #4d3b1e;
+      line-height: 1.4;
     }
 
     .hidden {
@@ -87,11 +126,20 @@
 
 <body>
 
-  <div class="status" id="status">AR pronta</div>
+  <div class="badge" id="status">AR pronta</div>
 
-  <div class="controls" id="controls">
-    <div class="hint" id="hint">Tocca “Avvia esperienza” e inquadra il target.</div>
-    <button class="btn" id="startBtn">Avvia esperienza</button>
+  <div class="overlay" id="ui">
+    <div class="card">
+      <h2>Pasqua AR Experience</h2>
+      <p><strong>Fabbricanti di Emozioni</strong></p>
+      <p>Tocca avvia e inquadra il biglietto di Pasqua per sbloccare il video di auguri.</p>
+      <button class="btn" id="startBtn">Avvia esperienza</button>
+    </div>
+  </div>
+
+  <div class="mini-panel" id="playPanel">
+    <p>Target rilevato. Tocca qui per riprodurre il video di auguri.</p>
+    <button class="btn secondary" id="playBtn">Riproduci auguri</button>
   </div>
 
   <a-scene
@@ -125,13 +173,13 @@
     </a-camera>
 
     <a-entity id="target" mindar-image-target="targetIndex:0"></a-entity>
-
   </a-scene>
 
   <script>
     const startBtn = document.getElementById("startBtn");
-    const controls = document.getElementById("controls");
-    const hint = document.getElementById("hint");
+    const playBtn = document.getElementById("playBtn");
+    const ui = document.getElementById("ui");
+    const playPanel = document.getElementById("playPanel");
     const status = document.getElementById("status");
 
     const sceneEl = document.querySelector("a-scene");
@@ -140,27 +188,11 @@
     const video = document.getElementById("video");
 
     let arStarted = false;
-    let experienceTriggered = false;
-    let mediaUnlocked = false;
+    let targetSeen = false;
+    let videoStarted = false;
 
     function setStatus(text) {
       status.textContent = text;
-    }
-
-    async function unlockMedia() {
-      if (mediaUnlocked) return;
-
-      try {
-        video.muted = true;
-        video.currentTime = 0;
-        await video.play();
-        video.pause();
-        video.currentTime = 0;
-        video.muted = false;
-        mediaUnlocked = true;
-      } catch (err) {
-        console.error("Errore sblocco media:", err);
-      }
     }
 
     async function startAR() {
@@ -169,51 +201,55 @@
 
       try {
         await sceneEl.systems["mindar-image-system"].start();
-        setStatus("Inquadra il target");
-        hint.textContent = "Sto cercando il target…";
+        ui.classList.add("hidden");
+        setStatus("Inquadra il biglietto");
       } catch (err) {
         console.error(err);
         setStatus("Errore avvio AR");
-        hint.textContent = "Impossibile avviare la fotocamera.";
       }
     }
 
-    async function playVideoWithAudio() {
+    async function playVideo() {
+      if (videoStarted) return;
+
       try {
         video.pause();
         video.currentTime = 0;
-        video.muted = false;
+        screenPlane.setAttribute("visible", true);
         await video.play();
+        videoStarted = true;
+        playPanel.style.display = "none";
+        setStatus("Auguri in riproduzione");
       } catch (err) {
         console.error("Errore play video:", err);
+        setStatus("Tocca di nuovo per riprodurre");
       }
     }
 
     startBtn.addEventListener("click", async () => {
-      await unlockMedia();
       await startAR();
-      startBtn.classList.add("hidden");
     });
 
-    targetEl.addEventListener("targetFound", async () => {
-      if (experienceTriggered) return;
+    targetEl.addEventListener("targetFound", () => {
+      if (videoStarted) return;
 
-      experienceTriggered = true;
-
+      targetSeen = true;
+      playPanel.style.display = "block";
       setStatus("Target rilevato");
-      hint.textContent = "Esperienza avviata";
-
-      screenPlane.setAttribute("visible", true);
-      await playVideoWithAudio();
-
-      setTimeout(() => {
-        controls.classList.add("hidden");
-      }, 800);
     });
 
     targetEl.addEventListener("targetLost", () => {
-      // ignorato volutamente:
-      // il video resta fisso e continua fino alla fine
+      if (!videoStarted) {
+        setStatus("Target perso");
+      }
+    });
+
+    playBtn.addEventListener("click", async () => {
+      if (!targetSeen) {
+        setStatus("Inquadra prima il target");
+        return;
+      }
+      await playVideo();
     });
 
     video.addEventListener("ended", () => {
