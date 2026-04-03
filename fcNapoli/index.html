@@ -42,89 +42,39 @@
       justify-content: center;
       z-index: 20;
       padding: 18px;
-      background:
-        radial-gradient(circle at 50% 25%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%),
-        linear-gradient(180deg, #dff4ff 0%, #78c7ff 100%);
+      background: linear-gradient(180deg, #dff4ff 0%, #78c7ff 100%);
     }
 
     .card {
       width: min(560px, 100%);
       background: rgba(255,255,255,.92);
-      border: 1px solid rgba(255,255,255,.75);
       border-radius: 22px;
       padding: 18px;
       text-align: center;
       box-shadow: 0 18px 55px rgba(0,0,0,.20);
-      backdrop-filter: blur(10px);
     }
 
     .title {
-      margin: 2px 0 6px;
       font-size: 22px;
       font-weight: 900;
       color: #005b96;
     }
 
     .sub {
-      margin: 0 0 12px;
       font-size: 14px;
-      color: rgba(0,60,110,.88);
-      line-height: 1.45;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
+      margin-top: 10px;
+      color: #003f6b;
     }
 
     .btn {
+      margin-top: 15px;
       border: none;
       border-radius: 999px;
       padding: 12px 18px;
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,.18);
       background: #0088d1;
       color: white;
-      font-size: 16px;
-    }
-
-    .pill {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      z-index: 30;
-      pointer-events: none;
-    }
-
-    .badge {
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.78);
-      border: 1px solid rgba(255,255,255,.92);
-      color: rgba(0,60,110,.92);
-      font-size: 13px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.18);
-    }
-
-    .badge strong {
-      color: #005b96;
-      font-weight: 900;
-    }
-
-    .hidden {
-      display: none !important;
     }
 
     .video-layer {
@@ -138,259 +88,131 @@
       align-items: flex-start;
       justify-content: center;
       padding-top: 8vh;
-      box-sizing: border-box;
-      pointer-events: none;
     }
 
     .video-wrap {
-      position: relative;
       width: min(80vw, 380px);
-      height: auto;
-      aspect-ratio: 9 / 16;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      aspect-ratio: 9/16;
       opacity: 0;
-      transform: scale(0.75) translateY(40px);
-      transition:
-        transform 420ms cubic-bezier(.2,.8,.2,1),
-        opacity 320ms ease-out;
-      will-change: transform, opacity;
+      transform: scale(0.75);
+      transition: all 0.4s ease;
     }
 
     .video-wrap.show {
       opacity: 1;
-      transform: scale(1) translateY(0);
+      transform: scale(1);
     }
 
     #playerVideo {
       width: 100%;
       height: 100%;
+      border-radius: 18px;
       object-fit: contain;
-      border-radius: 20px;
-      background: #000;
-      display: block;
-      box-shadow:
-        0 24px 70px rgba(0,0,0,.28),
-        0 0 0 1px rgba(255,255,255,.18) inset;
-    }
-
-    .video-wrap::before {
-      content: "";
-      position: absolute;
-      inset: 8%;
-      border-radius: 28px;
-      background: radial-gradient(circle, rgba(120,190,255,.35), rgba(120,190,255,0) 70%);
-      filter: blur(16px);
-      z-index: -1;
-      opacity: 0;
-      transition: opacity 420ms ease-out;
-    }
-
-    .video-wrap.show::before {
-      opacity: 1;
+      background: black;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="pill">
-    <div class="badge" id="status"><strong>AR</strong> Pronta ✨</div>
-    <div class="badge hidden" id="page">Inquadra una maglietta</div>
+<div class="overlay" id="ui">
+  <div class="card">
+    <div class="title">FC Napoli AR</div>
+    <div class="sub">Inquadra una maglietta per vedere il video</div>
+    <button class="btn" id="startBtn">Avvia esperienza</button>
   </div>
+</div>
 
-  <div class="overlay" id="ui">
-    <div class="card">
-      <div class="title">FC Napoli AR Experience</div>
-      <div class="sub"><strong>Inquadra una delle 3 magliette</strong></div>
-      <div class="sub">
-        Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra una maglietta.<br>
-        Ogni target aprirà il suo video dedicato.
-      </div>
-      <div class="row">
-        <button class="btn" id="startBtn">Avvia esperienza</button>
-      </div>
-      <div class="sub" style="margin-top:10px;font-size:12.5px;">
-        Quando un video termina, puoi spostarti e inquadrare un altro target.
-      </div>
-    </div>
+<div class="video-layer" id="videoLayer">
+  <div class="video-wrap" id="videoWrap">
+    <video id="playerVideo" playsinline webkit-playsinline preload="auto"></video>
   </div>
+</div>
 
-  <div class="video-layer" id="videoLayer">
-    <div class="video-wrap" id="videoWrap">
-      <video
-        id="playerVideo"
-        playsinline
-        webkit-playsinline
-        preload="auto"
-        muted
-        crossorigin="anonymous">
-      </video>
-    </div>
-  </div>
+<a-scene
+  mindar-image="imageTargetSrc: targets.mind; autoStart:false;"
+  embedded
+  vr-mode-ui="enabled:false"
+  device-orientation-permission-ui="enabled:false">
 
-  <a-scene
-    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
-    embedded
-    vr-mode-ui="enabled:false"
-    device-orientation-permission-ui="enabled:false">
+  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+  <a-entity id="t0" mindar-image-target="targetIndex:0"></a-entity>
+  <a-entity id="t1" mindar-image-target="targetIndex:1"></a-entity>
+  <a-entity id="t2" mindar-image-target="targetIndex:2"></a-entity>
 
-    <a-entity id="t0" mindar-image-target="targetIndex: 0"></a-entity>
-    <a-entity id="t1" mindar-image-target="targetIndex: 1"></a-entity>
-    <a-entity id="t2" mindar-image-target="targetIndex: 2"></a-entity>
+</a-scene>
 
-  </a-scene>
+<script>
+const startBtn = document.getElementById("startBtn");
+const ui = document.getElementById("ui");
 
-  <script>
-    const ui = document.getElementById("ui");
-    const startBtn = document.getElementById("startBtn");
-    const status = document.getElementById("status");
-    const page = document.getElementById("page");
+const videoLayer = document.getElementById("videoLayer");
+const videoWrap = document.getElementById("videoWrap");
+const playerVideo = document.getElementById("playerVideo");
 
-    const videoLayer = document.getElementById("videoLayer");
-    const videoWrap = document.getElementById("videoWrap");
-    const playerVideo = document.getElementById("playerVideo");
+const scene = document.querySelector("a-scene");
 
-    const scene = document.querySelector("a-scene");
-    const t0 = document.getElementById("t0");
-    const t1 = document.getElementById("t1");
-    const t2 = document.getElementById("t2");
+const t0 = document.getElementById("t0");
+const t1 = document.getElementById("t1");
+const t2 = document.getElementById("t2");
 
-    const videoMap = {
-      0: "./assets/video/mctominay.mp4",
-      1: "./assets/video/de-bruyne.mp4",
-      2: "./assets/video/di-lorenzo.mp4"
-    };
+/* 🔥 I TUOI LINK */
+const videoMap = {
+  0: "https://video.wixstatic.com/video/047e10_a711bf4044e8402c828703302889b24a/480p/mp4/file.mp4",
+  1: "https://video.wixstatic.com/video/047e10_857d03036ed64a8db729b6a03e15184c/720p/mp4/file.mp4",
+  2: "https://video.wixstatic.com/video/047e10_32d3a2b588dc45858baae2a12965e009/1080p/mp4/file.mp4"
+};
 
-    const labelMap = {
-      0: "McTominay",
-      1: "De Bruyne",
-      2: "Di Lorenzo"
-    };
+let playing = false;
 
-    let experienceRunning = false;
-    let videoPlaying = false;
-    let currentTargetIndex = null;
+function showVideo(){
+  videoLayer.style.display = "flex";
+  requestAnimationFrame(()=>videoWrap.classList.add("show"));
+}
 
-    function setStatus(text) {
-      status.textContent = "AR " + text;
-    }
+function hideVideo(){
+  videoWrap.classList.remove("show");
+  setTimeout(()=>videoLayer.style.display="none",200);
+}
 
-    function stopVideo() {
-      try {
-        playerVideo.pause();
-        playerVideo.currentTime = 0;
-        playerVideo.removeAttribute("src");
-        playerVideo.load();
-      } catch (e) {}
-    }
+async function playVideo(index){
+  if(playing) return;
 
-    async function unlockVideo() {
-      try {
-        playerVideo.src = videoMap[0];
-        playerVideo.muted = true;
-        await playerVideo.play();
-        playerVideo.pause();
-        playerVideo.currentTime = 0;
-      } catch (e) {}
-    }
+  playing = true;
 
-    function showVideo() {
-      videoLayer.style.display = "flex";
-      requestAnimationFrame(() => {
-        videoWrap.classList.add("show");
-      });
-    }
+  playerVideo.src = videoMap[index];
+  playerVideo.load();
 
-    function hideVideo() {
-      videoWrap.classList.remove("show");
-      setTimeout(() => {
-        videoLayer.style.display = "none";
-      }, 220);
-    }
+  showVideo();
 
-    async function playTargetVideo(targetIndex) {
-      if (videoPlaying) return;
+  try{
+    await playerVideo.play();
+  }catch(e){
+    console.log("play error", e);
+  }
+}
 
-      const videoSrc = videoMap[targetIndex];
-      const label = labelMap[targetIndex] || "Video";
+function reset(){
+  playing = false;
+  playerVideo.pause();
+  playerVideo.currentTime = 0;
+  hideVideo();
+}
 
-      if (!videoSrc) return;
+startBtn.onclick = async ()=>{
+  await scene.systems["mindar-image-system"].start();
+  ui.style.display="none";
+};
 
-      videoPlaying = true;
-      currentTargetIndex = targetIndex;
+t0.addEventListener("targetFound", ()=>playVideo(0));
+t1.addEventListener("targetFound", ()=>playVideo(1));
+t2.addEventListener("targetFound", ()=>playVideo(2));
 
-      setStatus("Trovato ✅");
-      page.textContent = "In riproduzione: " + label;
-
-      stopVideo();
-      playerVideo.src = videoSrc;
-      playerVideo.load();
-
-      showVideo();
-
-      try {
-        playerVideo.muted = true;
-        playerVideo.currentTime = 0;
-        await playerVideo.play();
-      } catch (e) {
-        console.error("video play:", e);
-        setStatus("Errore video");
-        videoPlaying = false;
-      }
-    }
-
-    async function startAR() {
-      if (experienceRunning) return;
-
-      try {
-        await unlockVideo();
-        await scene.systems["mindar-image-system"].start();
-        experienceRunning = true;
-        ui.style.display = "none";
-        setStatus("Inquadra una maglietta ✨");
-        page.classList.remove("hidden");
-        page.textContent = "Inquadra una maglietta";
-      } catch (e) {
-        console.error("start ar:", e);
-        setStatus("Errore avvio AR");
-      }
-    }
-
-    function handleTargetFound(index) {
-      if (!experienceRunning) return;
-      if (videoPlaying) return;
-      playTargetVideo(index);
-    }
-
-    function resetForNextTarget() {
-      videoPlaying = false;
-      currentTargetIndex = null;
-      hideVideo();
-      setStatus("Inquadra una maglietta ✨");
-      page.textContent = "Inquadra un'altra maglietta";
-    }
-
-    startBtn.addEventListener("click", async () => {
-      await startAR();
-    });
-
-    t0.addEventListener("targetFound", () => handleTargetFound(0));
-    t1.addEventListener("targetFound", () => handleTargetFound(1));
-    t2.addEventListener("targetFound", () => handleTargetFound(2));
-
-    t0.addEventListener("targetLost", () => {});
-    t1.addEventListener("targetLost", () => {});
-    t2.addEventListener("targetLost", () => {});
-
-    playerVideo.addEventListener("ended", () => {
-      stopVideo();
-      resetForNextTarget();
-    });
-  </script>
+playerVideo.addEventListener("ended", ()=>{
+  reset();
+});
+</script>
 
 </body>
 </html>
