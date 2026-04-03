@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FC Napoli AR</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(#ccecff, #6bbcff);
+    }
+
+    a-scene {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 1;
+    }
+
+    canvas.a-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 25%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%),
+        linear-gradient(180deg, #dff4ff 0%, #78c7ff 100%);
+    }
+
+    .card {
+      width: min(560px, 100%);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 22px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 18px 55px rgba(0,0,0,.20);
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      margin: 2px 0 6px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #005b96;
+    }
+
+    .sub {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: rgba(0,60,110,.88);
+      line-height: 1.45;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      background: #0088d1;
+      color: white;
+      font-size: 16px;
+    }
+
+    .pill {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .badge {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(255,255,255,.92);
+      color: rgba(0,60,110,.92);
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+    }
+
+    .badge strong {
+      color: #005b96;
+      font-weight: 900;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .video-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 25;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 8vh;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+
+    .video-wrap {
+      position: relative;
+      width: min(80vw, 380px);
+      height: auto;
+      aspect-ratio: 9 / 16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.75) translateY(40px);
+      transition:
+        transform 420ms cubic-bezier(.2,.8,.2,1),
+        opacity 320ms ease-out;
+      will-change: transform, opacity;
+    }
+
+    .video-wrap.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    #playerVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 20px;
+      background: #000;
+      display: block;
+      box-shadow:
+        0 24px 70px rgba(0,0,0,.28),
+        0 0 0 1px rgba(255,255,255,.18) inset;
+    }
+
+    .video-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 8%;
+      border-radius: 28px;
+      background: radial-gradient(circle, rgba(120,190,255,.35), rgba(120,190,255,0) 70%);
+      filter: blur(16px);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 420ms ease-out;
+    }
+
+    .video-wrap.show::before {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="pill">
+    <div class="badge" id="status"><strong>AR</strong> Pronta ✨</div>
+    <div class="badge hidden" id="page">Inquadra una maglietta</div>
+  </div>
+
+  <div class="overlay" id="ui">
+    <div class="card">
+      <div class="title">FC Napoli AR Experience</div>
+      <div class="sub"><strong>Inquadra una delle 3 magliette</strong></div>
+      <div class="sub">
+        Tocca “Avvia esperienza”, consenti la fotocamera, poi inquadra una maglietta.<br>
+        Ogni target aprirà il suo video dedicato.
+      </div>
+      <div class="row">
+        <button class="btn" id="startBtn">Avvia esperienza</button>
+      </div>
+      <div class="sub" style="margin-top:10px;font-size:12.5px;">
+        Quando un video termina, puoi spostarti e inquadrare un altro target.
+      </div>
+    </div>
+  </div>
+
+  <div class="video-layer" id="videoLayer">
+    <div class="video-wrap" id="videoWrap">
+      <video
+        id="playerVideo"
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        muted
+        crossorigin="anonymous">
+      </video>
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+    embedded
+    vr-mode-ui="enabled:false"
+    device-orientation-permission-ui="enabled:false">
+
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+    <a-entity id="t0" mindar-image-target="targetIndex: 0"></a-entity>
+    <a-entity id="t1" mindar-image-target="targetIndex: 1"></a-entity>
+    <a-entity id="t2" mindar-image-target="targetIndex: 2"></a-entity>
+
+  </a-scene>
+
+  <script>
+    const ui = document.getElementById("ui");
+    const startBtn = document.getElementById("startBtn");
+    const status = document.getElementById("status");
+    const page = document.getElementById("page");
+
+    const videoLayer = document.getElementById("videoLayer");
+    const videoWrap = document.getElementById("videoWrap");
+    const playerVideo = document.getElementById("playerVideo");
+
+    const scene = document.querySelector("a-scene");
+    const t0 = document.getElementById("t0");
+    const t1 = document.getElementById("t1");
+    const t2 = document.getElementById("t2");
+
+    const videoMap = {
+      0: "./assets/video/mctominay.mp4",
+      1: "./assets/video/de-bruyne.mp4",
+      2: "./assets/video/di-lorenzo.mp4"
+    };
+
+    const labelMap = {
+      0: "McTominay",
+      1: "De Bruyne",
+      2: "Di Lorenzo"
+    };
+
+    let experienceRunning = false;
+    let videoPlaying = false;
+    let currentTargetIndex = null;
+
+    function setStatus(text) {
+      status.textContent = "AR " + text;
+    }
+
+    function stopVideo() {
+      try {
+        playerVideo.pause();
+        playerVideo.currentTime = 0;
+        playerVideo.removeAttribute("src");
+        playerVideo.load();
+      } catch (e) {}
+    }
+
+    async function unlockVideo() {
+      try {
+        playerVideo.src = videoMap[0];
+        playerVideo.muted = true;
+        await playerVideo.play();
+        playerVideo.pause();
+        playerVideo.currentTime = 0;
+      } catch (e) {}
+    }
+
+    function showVideo() {
+      videoLayer.style.display = "flex";
+      requestAnimationFrame(() => {
+        videoWrap.classList.add("show");
+      });
+    }
+
+    function hideVideo() {
+      videoWrap.classList.remove("show");
+      setTimeout(() => {
+        videoLayer.style.display = "none";
+      }, 220);
+    }
+
+    async function playTargetVideo(targetIndex) {
+      if (videoPlaying) return;
+
+      const videoSrc = videoMap[targetIndex];
+      const label = labelMap[targetIndex] || "Video";
+
+      if (!videoSrc) return;
+
+      videoPlaying = true;
+      currentTargetIndex = targetIndex;
+
+      setStatus("Trovato ✅");
+      page.textContent = "In riproduzione: " + label;
+
+      stopVideo();
+      playerVideo.src = videoSrc;
+      playerVideo.load();
+
+      showVideo();
+
+      try {
+        playerVideo.muted = true;
+        playerVideo.currentTime = 0;
+        await playerVideo.play();
+      } catch (e) {
+        console.error("video play:", e);
+        setStatus("Errore video");
+        videoPlaying = false;
+      }
+    }
+
+    async function startAR() {
+      if (experienceRunning) return;
+
+      try {
+        await unlockVideo();
+        await scene.systems["mindar-image-system"].start();
+        experienceRunning = true;
+        ui.style.display = "none";
+        setStatus("Inquadra una maglietta ✨");
+        page.classList.remove("hidden");
+        page.textContent = "Inquadra una maglietta";
+      } catch (e) {
+        console.error("start ar:", e);
+        setStatus("Errore avvio AR");
+      }
+    }
+
+    function handleTargetFound(index) {
+      if (!experienceRunning) return;
+      if (videoPlaying) return;
+      playTargetVideo(index);
+    }
+
+    function resetForNextTarget() {
+      videoPlaying = false;
+      currentTargetIndex = null;
+      hideVideo();
+      setStatus("Inquadra una maglietta ✨");
+      page.textContent = "Inquadra un'altra maglietta";
+    }
+
+    startBtn.addEventListener("click", async () => {
+      await startAR();
+    });
+
+    t0.addEventListener("targetFound", () => handleTargetFound(0));
+    t1.addEventListener("targetFound", () => handleTargetFound(1));
+    t2.addEventListener("targetFound", () => handleTargetFound(2));
+
+    t0.addEventListener("targetLost", () => {});
+    t1.addEventListener("targetLost", () => {});
+    t2.addEventListener("targetLost", () => {});
+
+    playerVideo.addEventListener("ended", () => {
+      stopVideo();
+      resetForNextTarget();
+    });
+  </script>
+
+</body>
+</html>
