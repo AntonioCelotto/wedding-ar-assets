@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Piazza Italia AR Experience</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    :root {
+      --brand: #E1064A;
+      --brand-dark: #111111;
+      --bg-dark: #0F0F10;
+      --text-light: #FFFFFF;
+      --text-dark: #181818;
+      --muted: rgba(255,255,255,.75);
+      --panel: rgba(255,255,255,.96);
+      --panel-dark: rgba(20,20,22,.92);
+      --border-light: rgba(255,255,255,.18);
+      --shadow: 0 24px 70px rgba(0,0,0,.35);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 50% 18%, rgba(225,6,74,.18), rgba(225,6,74,0) 38%),
+        linear-gradient(180deg, #171719 0%, #080809 100%);
+      color: var(--text-light);
+    }
+
+    a-scene {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 1;
+    }
+
+    canvas.a-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .pill {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 40;
+      pointer-events: none;
+    }
+
+    .badge {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.92);
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+    }
+
+    .badge strong {
+      font-weight: 900;
+      color: var(--text-light);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 25%, rgba(255,255,255,.08), rgba(255,255,255,0) 55%),
+        linear-gradient(180deg, rgba(14,14,15,.92) 0%, rgba(6,6,7,.96) 100%);
+    }
+
+    .card {
+      width: min(560px, 100%);
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--border-light);
+      border-radius: 28px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(225,6,74,.14);
+      border: 1px solid rgba(225,6,74,.28);
+      color: #ffd8e4;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 6vw, 40px);
+      font-weight: 900;
+      line-height: 1.02;
+      color: var(--text-light);
+      letter-spacing: -.03em;
+    }
+
+    .title .accent {
+      color: var(--brand);
+    }
+
+    .sub {
+      margin: 0 0 12px;
+      font-size: 15px;
+      line-height: 1.55;
+      color: rgba(255,255,255,.82);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: var(--radius-pill);
+      padding: 14px 20px;
+      font-weight: 900;
+      cursor: pointer;
+      background: var(--brand);
+      color: white;
+      font-size: 15px;
+      box-shadow: 0 14px 26px rgba(225,6,74,.28);
+      transition: transform 160ms ease, opacity 160ms ease;
+    }
+
+    .btn:active {
+      transform: scale(.98);
+    }
+
+    .btn.secondary {
+      background: #111;
+      box-shadow: 0 10px 24px rgba(0,0,0,.2);
+    }
+
+    .small-note {
+      margin-top: 12px;
+      font-size: 12.5px;
+      color: rgba(255,255,255,.62);
+      line-height: 1.45;
+    }
+
+    .intro-layer,
+    .quiz-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      box-sizing: border-box;
+      background: rgba(0,0,0,.56);
+    }
+
+    .intro-card,
+    .quiz-card {
+      width: min(470px, 100%);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .intro-card {
+      background:
+        linear-gradient(180deg, rgba(25,25,28,.98) 0%, rgba(10,10,12,.98) 100%);
+      color: white;
+      padding: 24px 22px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .intro-card h2 {
+      margin: 0 0 8px;
+      font-size: 29px;
+      line-height: 1.05;
+      font-weight: 900;
+      letter-spacing: -.03em;
+    }
+
+    .intro-card h2 span {
+      color: var(--brand);
+    }
+
+    .intro-card p {
+      margin: 0 0 18px;
+      color: rgba(255,255,255,.78);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .quiz-card {
+      background: var(--panel);
+      color: var(--text-dark);
+      padding: 22px 18px 18px;
+    }
+
+    .quiz-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .quiz-brand {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--brand);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    .quiz-counter {
+      font-size: 12px;
+      font-weight: 800;
+      color: #666;
+      background: #f1f1f3;
+      border-radius: var(--radius-pill);
+      padding: 8px 10px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      width: 100%;
+      background: #ececef;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--brand);
+      border-radius: inherit;
+      transition: width 220ms ease;
+    }
+
+    .quiz-title {
+      margin: 0 0 14px;
+      font-size: 26px;
+      font-weight: 900;
+      color: #141414;
+      line-height: 1.05;
+      letter-spacing: -.03em;
+    }
+
+    .quiz-question {
+      margin: 0 0 16px;
+      font-size: 19px;
+      font-weight: 800;
+      line-height: 1.4;
+      color: #1f1f1f;
+    }
+
+    .answers {
+      display: grid;
+      gap: 12px;
+    }
+
+    .answer-btn {
+      width: 100%;
+      padding: 15px 16px;
+      border: none;
+      border-radius: 16px;
+      background: #111;
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 140ms ease, opacity 140ms ease, background 140ms ease;
+    }
+
+    .answer-btn:hover {
+      opacity: .96;
+    }
+
+    .answer-btn:active {
+      transform: scale(.99);
+    }
+
+    .answer-btn.correct {
+      background: var(--brand);
+    }
+
+    .answer-btn.wrong {
+      background: #3b3b40;
+    }
+
+    .feedback {
+      margin-top: 14px;
+      min-height: 26px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #444;
+    }
+
+    .result-title {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.04;
+      font-weight: 900;
+      letter-spacing: -.03em;
+      color: #151515;
+    }
+
+    .result-title span {
+      color: var(--brand);
+    }
+
+    .result-score {
+      margin: 0 0 10px;
+      font-size: 20px;
+      font-weight: 900;
+      color: #111;
+    }
+
+    .result-text {
+      margin: 0 0 18px;
+      font-size: 15px;
+      line-height: 1.55;
+      color: #444;
+    }
+
+    .result-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="pill">
+    <div class="badge" id="status"><strong>AR</strong> Pronta ✨</div>
+    <div class="badge hidden" id="page">Inquadra la maglietta</div>
+  </div>
+
+  <div class="overlay" id="ui">
+    <div class="card">
+      <div class="eyebrow">Piazza Italia AR Experience</div>
+      <h1 class="title">Unlock the <span class="accent">Runway</span></h1>
+      <p class="sub">
+        Inquadra la maglietta e sblocca un’esperienza interattiva ispirata al mondo fashion.
+      </p>
+      <p class="sub">
+        Quando il look viene riconosciuto, si apre il quiz ufficiale Piazza Italia.
+      </p>
+
+      <div class="row">
+        <button class="btn" id="startBtn">Inizia esperienza</button>
+      </div>
+
+      <div class="small-note">
+        Consiglio: tieni la maglietta ben visibile, con buona luce e ferma per 1–2 secondi.
+      </div>
+    </div>
+  </div>
+
+  <div class="intro-layer" id="introLayer">
+    <div class="intro-card">
+      <div class="eyebrow">Look riconosciuto ✨</div>
+      <h2>The <span>Runway</span> is open</h2>
+      <p>
+        Il look è stato riconosciuto. Entra nell’esperienza Piazza Italia e mettiti alla prova con il quiz completo.
+      </p>
+      <div class="row">
+        <button class="btn" id="enterQuizBtn">Entra nel quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-layer" id="quizLayer">
+    <div class="quiz-card">
+      <div class="quiz-top">
+        <div class="quiz-brand">Piazza Italia</div>
+        <div class="quiz-counter" id="quizCounter">1 / 8</div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <h2 class="quiz-title">Runway Quiz</h2>
+      <div class="quiz-question" id="quizQuestion"></div>
+      <div class="answers" id="quizAnswers"></div>
+      <div class="feedback" id="quizFeedback"></div>
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiError: no;"
+    embedded
+    vr-mode-ui="enabled:false"
+    device-orientation-permission-ui="enabled:false">
+
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+    <a-entity id="t0" mindar-image-target="targetIndex: 0"></a-entity>
+
+  </a-scene>
+
+  <script>
+    const ui = document.getElementById("ui");
+    const startBtn = document.getElementById("startBtn");
+    const status = document.getElementById("status");
+    const page = document.getElementById("page");
+
+    const introLayer = document.getElementById("introLayer");
+    const enterQuizBtn = document.getElementById("enterQuizBtn");
+
+    const quizLayer = document.getElementById("quizLayer");
+    const quizCounter = document.getElementById("quizCounter");
+    const quizQuestion = document.getElementById("quizQuestion");
+    const quizAnswers = document.getElementById("quizAnswers");
+    const quizFeedback = document.getElementById("quizFeedback");
+    const progressFill = document.getElementById("progressFill");
+
+    const scene = document.querySelector("a-scene");
+    const target = document.getElementById("t0");
+
+    let arStarted = false;
+    let introShown = false;
+    let quizOpened = false;
+    let currentQuestion = 0;
+    let score = 0;
+    let answeringLocked = false;
+
+    const quizData = [
+      {
+        question: "Quale parola della maglietta attira subito lo sguardo e definisce il mood del look?",
+        answers: ["THE", "WEARS", "DEVIL", "PRADA"],
+        correct: 2,
+        feedback: "Esatto. “DEVIL” in rosso è il focus visivo del design."
+      },
+      {
+        question: "Qual è l’atmosfera che questa T-shirt comunica meglio?",
+        answers: ["Sportiva tecnica", "Fashion editoriale", "Street underground", "Vintage rock"],
+        correct: 1,
+        feedback: "Sì: lettering pulito, contrasto forte e mood da rivista fashion."
+      },
+      {
+        question: "Quale combinazione cromatica domina la stampa della maglietta?",
+        answers: ["Verde e oro", "Blu e bianco", "Rosso, nero e bianco", "Rosa e argento"],
+        correct: 2,
+        feedback: "Giusto. Bianco come base, nero per il testo e rosso per il focus."
+      },
+      {
+        question: "Quando si attiva questa esperienza AR?",
+        answers: [
+          "Quando il telefono vibra",
+          "Quando si inquadra la maglietta",
+          "Quando si tocca due volte lo schermo",
+          "Quando si alza il volume"
+        ],
+        correct: 1,
+        feedback: "Corretto. La maglietta è il trigger dell’esperienza."
+      },
+      {
+        question: "Quale elemento rende questa maglietta particolarmente adatta al riconoscimento AR?",
+        answers: [
+          "Il tessuto elasticizzato",
+          "Il contrasto forte del lettering",
+          "La cucitura delle maniche",
+          "Il jeans abbinato"
+        ],
+        correct: 1,
+        feedback: "Esatto. Il testo grande e contrastato aiuta molto il tracking."
+      },
+      {
+        question: "Se dovessi descrivere questo capo con una sola parola, quale sarebbe la più giusta?",
+        answers: ["Minimal", "Iconico", "Romantico", "Sportivo"],
+        correct: 1,
+        feedback: "Sì. È un capo statement, immediato e riconoscibile."
+      },
+      {
+        question: "Quale interazione è più coerente con il concept Piazza Italia per questa esperienza?",
+        answers: [
+          "Far partire un timer casuale",
+          "Aprire un quiz fashion sul telefono",
+          "Cambiare automaticamente la fotocamera",
+          "Bloccare il touch screen"
+        ],
+        correct: 1,
+        feedback: "Corretto. Il quiz rende la T-shirt interattiva e memorabile."
+      },
+      {
+        question: "Quale finale è il più in linea con questo progetto?",
+        answers: [
+          "Schermata nera senza messaggi",
+          "Risultato con tono fashion e brand Piazza Italia",
+          "Riavvio automatico dell’esperienza",
+          "Chiusura forzata della pagina"
+        ],
+        correct: 1,
+        feedback: "Perfetto. Il finale deve chiudere l’esperienza con stile."
+      }
+    ];
+
+    function setStatus(text) {
+      status.textContent = "AR " + text;
+    }
+
+    function showIntro() {
+      introLayer.style.display = "flex";
+    }
+
+    function hideIntro() {
+      introLayer.style.display = "none";
+    }
+
+    function showQuiz() {
+      quizLayer.style.display = "flex";
+    }
+
+    function hideQuiz() {
+      quizLayer.style.display = "none";
+    }
+
+    function updateProgress() {
+      const total = quizData.length;
+      const current = currentQuestion + 1;
+      quizCounter.textContent = `${current} / ${total}`;
+      progressFill.style.width = `${(currentQuestion / total) * 100}%`;
+    }
+
+    function openQuiz() {
+      quizOpened = true;
+      currentQuestion = 0;
+      score = 0;
+      answeringLocked = false;
+      hideIntro();
+      showQuiz();
+      renderQuestion();
+      setStatus("Quiz attivo ✅");
+      page.textContent = "Quiz sbloccato";
+    }
+
+    function renderQuestion() {
+      const q = quizData[currentQuestion];
+      quizQuestion.textContent = q.question;
+      quizAnswers.innerHTML = "";
+      quizFeedback.textContent = "";
+      updateProgress();
+
+      q.answers.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.textContent = answer;
+        btn.addEventListener("click", () => selectAnswer(index, btn));
+        quizAnswers.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(index, clickedBtn) {
+      if (answeringLocked) return;
+      answeringLocked = true;
+
+      const q = quizData[currentQuestion];
+      const buttons = [...quizAnswers.querySelectorAll(".answer-btn")];
+
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correct) btn.classList.add("correct");
+      });
+
+      if (index === q.correct) {
+        score++;
+        quizFeedback.textContent = q.feedback;
+      } else {
+        clickedBtn.classList.add("wrong");
+        quizFeedback.textContent = q.feedback;
+      }
+
+      setTimeout(() => {
+        currentQuestion++;
+        answeringLocked = false;
+
+        if (currentQuestion < quizData.length) {
+          renderQuestion();
+        } else {
+          showResult();
+        }
+      }, 1100);
+    }
+
+    function getResultMessage(score, total) {
+      if (score === total) {
+        return {
+          title: "Look <span>Iconico</span>",
+          text: "Hai dominato il quiz con sicurezza editoriale. Piazza Italia approva: il tuo stile è pronto per la runway."
+        };
+      }
+
+      if (score >= 6) {
+        return {
+          title: "Quasi da <span>copertina</span>",
+          text: "Ottimo risultato. Hai intuito, stile e presenza. Ancora un passo e diventi leggenda fashion."
+        };
+      }
+
+      if (score >= 4) {
+        return {
+          title: "Buon gusto, <span>più audacia</span>",
+          text: "Sei sulla strada giusta. Il look c’è, ma puoi osare ancora di più per lasciare il segno."
+        };
+      }
+
+      return {
+        title: "Serve più <span>runway</span>",
+        text: "Hai sbloccato l’esperienza, ma il tuo lato fashion può crescere ancora. Riprova e alza il livello."
+      };
+    }
+
+    function showResult() {
+      progressFill.style.width = "100%";
+      quizCounter.textContent = `${quizData.length} / ${quizData.length}`;
+
+      const result = getResultMessage(score, quizData.length);
+
+      quizAnswers.innerHTML = "";
+      quizFeedback.textContent = "";
+      quizQuestion.innerHTML = `
+        <div class="result-title">${result.title}</div>
+        <div class="result-score">Hai totalizzato ${score} su ${quizData.length}</div>
+        <div class="result-text">${result.text}</div>
+        <div class="result-actions">
+          <button class="btn" id="restartBtn">Rigioca</button>
+          <button class="btn secondary" id="closeBtn">Chiudi</button>
+        </div>
+        <div class="footer-note">Piazza Italia AR Experience</div>
+      `;
+
+      document.getElementById("restartBtn").addEventListener("click", restartQuiz);
+      document.getElementById("closeBtn").addEventListener("click", closeQuiz);
+
+      setStatus("Quiz completato ✨");
+      page.textContent = "Esperienza completata";
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      answeringLocked = false;
+      renderQuestion();
+      setStatus("Quiz attivo ✅");
+      page.textContent = "Quiz riavviato";
+    }
+
+    function closeQuiz() {
+      hideQuiz();
+      quizOpened = false;
+      introShown = false;
+      setStatus("Inquadra la maglietta ✨");
+      page.textContent = "Inquadra la maglietta";
+    }
+
+    startBtn.addEventListener("click", async () => {
+      if (arStarted) return;
+      arStarted = true;
+
+      try {
+        await scene.systems["mindar-image-system"].start();
+        ui.style.display = "none";
+        setStatus("Inquadra la maglietta ✨");
+        page.classList.remove("hidden");
+        page.textContent = "Inquadra la maglietta";
+      } catch (e) {
+        console.error("start ar:", e);
+        setStatus("Errore avvio AR");
+      }
+    });
+
+    enterQuizBtn.addEventListener("click", () => {
+      openQuiz();
+    });
+
+    target.addEventListener("targetFound", () => {
+      if (quizOpened || introShown) return;
+      introShown = true;
+      showIntro();
+      setStatus("Look riconosciuto ✅");
+      page.textContent = "Runway unlocked";
+    });
+
+    target.addEventListener("targetLost", () => {
+      // volutamente ignorato:
+      // una volta trovato il target, l’utente può continuare senza perdere il quiz
+    });
+  </script>
+
+</body>
+</html>
