@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>D10S Museo Maradona AR</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #050816;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 20% 15%, rgba(0, 162, 255, .38), transparent 32%),
+        radial-gradient(circle at 80% 20%, rgba(255, 215, 0, .24), transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(0, 102, 204, .35), transparent 36%),
+        linear-gradient(135deg, #050816 0%, #061b3a 50%, #020617 100%);
+    }
+
+    a-scene {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 1;
+    }
+
+    canvas.a-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    .stars, .stars::before, .stars::after {
+      position: fixed;
+      inset: 0;
+      content: "";
+      pointer-events: none;
+      z-index: 2;
+      background-image:
+        radial-gradient(#ffffff 1px, transparent 1px),
+        radial-gradient(#ffd700 1px, transparent 1px);
+      background-size: 90px 90px, 140px 140px;
+      background-position: 0 0, 35px 45px;
+      opacity: .22;
+      animation: drift 42s linear infinite;
+    }
+
+    .stars::before { opacity: .12; animation-duration: 65s; }
+    .stars::after { opacity: .08; animation-duration: 95s; }
+
+    @keyframes drift {
+      from { transform: translateY(0); }
+      to { transform: translateY(-180px); }
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(0, 162, 255, .35), transparent 34%),
+        linear-gradient(180deg, rgba(5,8,22,.96), rgba(2,6,23,.96));
+    }
+
+    .card {
+      width: min(560px, 100%);
+      padding: 26px 22px;
+      text-align: center;
+      border-radius: 28px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.20);
+      box-shadow: 0 24px 80px rgba(0,0,0,.40);
+      backdrop-filter: blur(20px);
+      color: white;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(0,162,255,.16);
+      border: 1px solid rgba(255,255,255,.18);
+      color: #bde9ff;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 18px 0 10px;
+      font-size: clamp(38px, 12vw, 76px);
+      line-height: .9;
+      font-weight: 1000;
+      letter-spacing: -0.08em;
+      background: linear-gradient(90deg, #ffffff, #00a2ff, #ffd700);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .sub {
+      max-width: 430px;
+      margin: 0 auto;
+      color: #c8dcff;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .btn {
+      margin-top: 20px;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, #008cff, #00d4ff);
+      box-shadow: 0 18px 50px rgba(0, 162, 255, .35);
+    }
+
+    .hint {
+      margin-top: 14px;
+      color: rgba(255,255,255,.62);
+      font-size: 12px;
+    }
+
+    .scan-label {
+      position: fixed;
+      left: 50%;
+      bottom: calc(22px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 15;
+      display: none;
+      width: min(92vw, 430px);
+      padding: 12px 16px;
+      border-radius: 18px;
+      text-align: center;
+      color: white;
+      background: rgba(2,6,23,.58);
+      border: 1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(18px);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .video-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      pointer-events: none;
+    }
+
+    .video-wrap {
+      width: min(86vw, 430px);
+      aspect-ratio: 9 / 16;
+      opacity: 0;
+      transform: scale(.72) translateY(24px);
+      transition: all .42s ease;
+      border-radius: 26px;
+      padding: 3px;
+      background: linear-gradient(135deg, rgba(0,162,255,.95), rgba(255,215,0,.85));
+      box-shadow:
+        0 0 60px rgba(0,162,255,.38),
+        0 30px 90px rgba(0,0,0,.50);
+    }
+
+    .video-wrap.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    #playerVideo {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 23px;
+      object-fit: cover;
+      background: black;
+    }
+
+    .close-video {
+      position: fixed;
+      top: calc(18px + env(safe-area-inset-top));
+      right: 18px;
+      z-index: 40;
+      display: none;
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,.20);
+      border-radius: 50%;
+      background: rgba(2,6,23,.70);
+      color: white;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stars"></div>
+
+  <div class="overlay" id="ui">
+    <div class="card">
+      <div class="badge">Museo Maradona AR</div>
+      <div class="title">D10S</div>
+      <div class="sub">
+        Inquadra l’immagine del museo per sbloccare il contenuto in realtà aumentata.
+      </div>
+      <button class="btn" id="startBtn">Avvia esperienza</button>
+      <div class="hint">Consenti l’accesso alla fotocamera quando richiesto.</div>
+    </div>
+  </div>
+
+  <div class="scan-label" id="scanLabel">Inquadra il target D10S</div>
+
+  <button class="close-video" id="closeVideo" aria-label="Chiudi video">×</button>
+
+  <div class="video-layer" id="videoLayer">
+    <div class="video-wrap" id="videoWrap">
+      <video
+        id="playerVideo"
+        src="video.mp4"
+        playsinline
+        webkit-playsinline
+        preload="auto">
+      </video>
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart:false; filterMinCF:0.0001; filterBeta:0.01;"
+    embedded
+    color-space="sRGB"
+    renderer="colorManagement:true, physicallyCorrectLights"
+    vr-mode-ui="enabled:false"
+    device-orientation-permission-ui="enabled:false">
+
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+    <a-entity id="target" mindar-image-target="targetIndex:0">
+      <a-ring
+        position="0 0 0"
+        radius-inner="0.58"
+        radius-outer="0.62"
+        color="#00a2ff"
+        opacity="0.85"
+        animation="property: rotation; to: 0 0 360; loop: true; dur: 5000; easing: linear">
+      </a-ring>
+
+      <a-text
+        value="D10S"
+        position="0 -0.62 0"
+        align="center"
+        color="#FFD700"
+        width="2.8">
+      </a-text>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const ui = document.getElementById("ui");
+    const scanLabel = document.getElementById("scanLabel");
+    const videoLayer = document.getElementById("videoLayer");
+    const videoWrap = document.getElementById("videoWrap");
+    const playerVideo = document.getElementById("playerVideo");
+    const closeVideo = document.getElementById("closeVideo");
+    const scene = document.querySelector("a-scene");
+    const target = document.getElementById("target");
+
+    let playing = false;
+
+    function showVideo() {
+      videoLayer.style.display = "flex";
+      closeVideo.style.display = "block";
+      requestAnimationFrame(() => videoWrap.classList.add("show"));
+    }
+
+    function hideVideo() {
+      videoWrap.classList.remove("show");
+      closeVideo.style.display = "none";
+      setTimeout(() => {
+        videoLayer.style.display = "none";
+      }, 240);
+    }
+
+    async function playVideo() {
+      if (playing) return;
+      playing = true;
+      scanLabel.style.display = "none";
+
+      playerVideo.currentTime = 0;
+      showVideo();
+
+      try {
+        await playerVideo.play();
+      } catch (e) {
+        console.log("Errore avvio video:", e);
+      }
+    }
+
+    function resetVideo() {
+      playing = false;
+      playerVideo.pause();
+      playerVideo.currentTime = 0;
+      hideVideo();
+      scanLabel.style.display = "block";
+    }
+
+    startBtn.onclick = async () => {
+      try {
+        await scene.systems["mindar-image-system"].start();
+        ui.style.display = "none";
+        scanLabel.style.display = "block";
+      } catch (e) {
+        alert("Errore avvio fotocamera. Controlla permessi e HTTPS.");
+        console.log(e);
+      }
+    };
+
+    target.addEventListener("targetFound", playVideo);
+
+    playerVideo.addEventListener("ended", resetVideo);
+    closeVideo.addEventListener("click", resetVideo);
+  </script>
+</body>
+</html>
