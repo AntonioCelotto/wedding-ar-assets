@@ -220,6 +220,25 @@
       backdrop-filter: blur(16px);
       pointer-events: auto;
     }
+
+    .audio-btn {
+      position: fixed;
+      left: 50%;
+      bottom: calc(28px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 45;
+      display: none;
+      border: none;
+      border-radius: 999px;
+      padding: 13px 20px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #04111f;
+      background: linear-gradient(135deg, #ffd700, #ffffff);
+      box-shadow: 0 18px 50px rgba(255, 215, 0, .35);
+      cursor: pointer;
+      pointer-events: auto;
+    }
   </style>
 </head>
 
@@ -241,6 +260,7 @@
   <div class="scan-label" id="scanLabel">Inquadra il target D10S</div>
 
   <button class="close-video" id="closeVideo" aria-label="Chiudi video">×</button>
+  <button class="audio-btn" id="audioBtn">🔊 Attiva audio</button>
 
   <div class="video-layer" id="videoLayer">
     <div class="video-wrap" id="videoWrap">
@@ -294,12 +314,14 @@
     const videoWrap = document.getElementById("videoWrap");
     const playerVideo = document.getElementById("playerVideo");
     const closeVideo = document.getElementById("closeVideo");
+    const audioBtn = document.getElementById("audioBtn");
     const scene = document.querySelector("a-scene");
     const target = document.getElementById("target");
 
     let playing = false;
 
     playerVideo.muted = true;
+    playerVideo.volume = 1;
     playerVideo.setAttribute("muted", "");
     playerVideo.setAttribute("playsinline", "");
     playerVideo.setAttribute("webkit-playsinline", "");
@@ -307,12 +329,14 @@
     function showVideo() {
       videoLayer.style.display = "flex";
       closeVideo.style.display = "block";
+      audioBtn.style.display = "block";
       requestAnimationFrame(() => videoWrap.classList.add("show"));
     }
 
     function hideVideo() {
       videoWrap.classList.remove("show");
       closeVideo.style.display = "none";
+      audioBtn.style.display = "none";
       setTimeout(() => {
         videoLayer.style.display = "none";
       }, 240);
@@ -328,6 +352,7 @@
       playerVideo.src = "video.mp4";
       playerVideo.load();
       playerVideo.currentTime = 0;
+      playerVideo.muted = true;
 
       showVideo();
 
@@ -341,10 +366,23 @@
       }
     }
 
+    async function activateAudio() {
+      try {
+        playerVideo.muted = false;
+        playerVideo.removeAttribute("muted");
+        playerVideo.volume = 1;
+        await playerVideo.play();
+        audioBtn.style.display = "none";
+      } catch (e) {
+        console.log("Errore attivazione audio:", e);
+      }
+    }
+
     function resetVideo() {
       playing = false;
       playerVideo.pause();
       playerVideo.currentTime = 0;
+      playerVideo.muted = true;
       hideVideo();
       scanLabel.style.display = "block";
     }
@@ -362,9 +400,9 @@
     };
 
     target.addEventListener("targetFound", playVideo);
-
     playerVideo.addEventListener("ended", resetVideo);
     closeVideo.addEventListener("click", resetVideo);
+    audioBtn.addEventListener("click", activateAudio);
   </script>
 </body>
 </html>
