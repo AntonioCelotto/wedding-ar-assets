@@ -198,7 +198,7 @@
       height: 100%;
       display: block;
       border-radius: 23px;
-      object-fit: cover;
+      object-fit: contain;
       background: black;
     }
 
@@ -218,6 +218,7 @@
       line-height: 1;
       cursor: pointer;
       backdrop-filter: blur(16px);
+      pointer-events: auto;
     }
   </style>
 </head>
@@ -248,6 +249,8 @@
         src="video.mp4"
         playsinline
         webkit-playsinline
+        muted
+        autoplay
         preload="auto">
       </video>
     </div>
@@ -296,6 +299,11 @@
 
     let playing = false;
 
+    playerVideo.muted = true;
+    playerVideo.setAttribute("muted", "");
+    playerVideo.setAttribute("playsinline", "");
+    playerVideo.setAttribute("webkit-playsinline", "");
+
     function showVideo() {
       videoLayer.style.display = "flex";
       closeVideo.style.display = "block";
@@ -312,16 +320,24 @@
 
     async function playVideo() {
       if (playing) return;
+
       playing = true;
       scanLabel.style.display = "none";
 
+      playerVideo.pause();
+      playerVideo.src = "video.mp4";
+      playerVideo.load();
       playerVideo.currentTime = 0;
+
       showVideo();
 
       try {
         await playerVideo.play();
       } catch (e) {
-        console.log("Errore avvio video:", e);
+        console.log("Errore play:", e);
+        setTimeout(() => {
+          playerVideo.play().catch(err => console.log("Errore play fallback:", err));
+        }, 300);
       }
     }
 
@@ -335,6 +351,7 @@
 
     startBtn.onclick = async () => {
       try {
+        playerVideo.muted = true;
         await scene.systems["mindar-image-system"].start();
         ui.style.display = "none";
         scanLabel.style.display = "block";
