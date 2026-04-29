@@ -1,436 +1,201 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>D10S Museo Maradona AR</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>D10S Museo Maradona AR</title>
 
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#020617;color:white;font-family:Arial}
 
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      background: #020617;
-      color: white;
-    }
+/* NASCONDE UI MINDAR */
+.mindar-ui-overlay,.mindar-ui-scanning,.mindar-ui-loading,.mindar-ui-compatibility{
+display:none!important}
 
-    .mindar-ui-overlay,
-    .mindar-ui-scanning,
-    .mindar-ui-loading,
-    .mindar-ui-compatibility {
-      display: none !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
+/* SCENA */
+a-scene{position:fixed;inset:0;width:100vw;height:100vh;z-index:1}
 
-    a-scene {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      z-index: 1;
-    }
+/* UI INIZIALE */
+.overlay{
+position:fixed;inset:0;z-index:50;
+display:flex;align-items:center;justify-content:center;
+background:linear-gradient(135deg,#020617,#061b3a)
+}
+.card{
+text-align:center;padding:30px;border-radius:20px;
+background:rgba(255,255,255,.1);backdrop-filter:blur(20px)
+}
+.title{font-size:60px;font-weight:900}
+.btn{
+margin-top:20px;padding:15px 25px;border:none;border-radius:999px;
+background:#00a2ff;color:white;font-weight:bold;cursor:pointer
+}
 
-    canvas.a-canvas {
-      width: 100vw !important;
-      height: 100vh !important;
-    }
+/* SCANNER */
+.scan-frame{position:fixed;inset:0;z-index:10;display:none}
+.scan-box{
+position:absolute;top:50%;left:50%;
+width:300px;height:250px;
+transform:translate(-50%,-50%)
+}
+.corner{position:absolute;width:50px;height:50px;border:6px solid white}
+.c1{top:0;left:0;border-right:none;border-bottom:none}
+.c2{top:0;right:0;border-left:none;border-bottom:none}
+.c3{bottom:0;left:0;border-right:none;border-top:none}
+.c4{bottom:0;right:0;border-left:none;border-top:none}
 
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 22px;
-      background:
-        radial-gradient(circle at 20% 15%, rgba(0,162,255,.45), transparent 32%),
-        radial-gradient(circle at 82% 18%, rgba(255,215,0,.28), transparent 30%),
-        linear-gradient(135deg, #020617, #061b3a 55%, #01030a);
-    }
+.scan-label{
+position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+z-index:20;display:none;font-weight:bold
+}
 
-    .card {
-      width: min(560px, 100%);
-      padding: 34px 24px;
-      text-align: center;
-      border-radius: 32px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.22);
-      box-shadow: 0 30px 90px rgba(0,0,0,.55);
-      backdrop-filter: blur(22px);
-    }
+/* VIDEO */
+.video-layer{
+position:fixed;inset:0;z-index:30;display:none;
+align-items:center;justify-content:center;
+background:rgba(0,0,0,.4)
+}
+#playerVideo{
+width:80vw;max-width:360px;background:black
+}
 
-    .badge {
-      display: inline-block;
-      padding: 9px 16px;
-      border-radius: 999px;
-      background: rgba(0,162,255,.18);
-      color: #c7ecff;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
+.close-video{
+position:fixed;top:20px;right:20px;
+z-index:9999;display:none;
+background:black;color:white;border:none;
+width:40px;height:40px;border-radius:50%;
+font-size:20px;cursor:pointer
+}
 
-    .title {
-      margin: 22px 0 12px;
-      font-size: clamp(54px, 18vw, 96px);
-      line-height: .85;
-      font-weight: 1000;
-      letter-spacing: -0.08em;
-      background: linear-gradient(90deg, #ffffff, #00a2ff, #ffd700);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .sub {
-      max-width: 440px;
-      margin: 0 auto;
-      color: #d8e6ff;
-      font-size: 15px;
-      line-height: 1.55;
-    }
-
-    .btn {
-      margin-top: 24px;
-      border: none;
-      border-radius: 999px;
-      padding: 16px 28px;
-      font-size: 16px;
-      font-weight: 950;
-      cursor: pointer;
-      color: white;
-      background: linear-gradient(135deg, #0077ff, #00d4ff);
-      box-shadow: 0 18px 55px rgba(0,162,255,.42);
-    }
-
-    .hint {
-      margin-top: 14px;
-      color: rgba(255,255,255,.65);
-      font-size: 12px;
-    }
-
-    .scan-frame {
-      position: fixed;
-      inset: 0;
-      z-index: 12;
-      pointer-events: none;
-      display: none;
-    }
-
-    .scan-box {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: min(78vw, 390px);
-      height: min(52vh, 340px);
-      transform: translate(-50%, -50%);
-    }
-
-    .corner {
-      position: absolute;
-      width: 58px;
-      height: 58px;
-      border-color: rgba(255,255,255,.88);
-      border-style: solid;
-    }
-
-    .c1 { top: 0; left: 0; border-width: 7px 0 0 7px; border-top-left-radius: 18px; }
-    .c2 { top: 0; right: 0; border-width: 7px 7px 0 0; border-top-right-radius: 18px; }
-    .c3 { bottom: 0; left: 0; border-width: 0 0 7px 7px; border-bottom-left-radius: 18px; }
-    .c4 { bottom: 0; right: 0; border-width: 0 7px 7px 0; border-bottom-right-radius: 18px; }
-
-    .scan-line {
-      position: absolute;
-      left: 6%;
-      top: 50%;
-      width: 88%;
-      height: 3px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, transparent, white, transparent);
-      animation: scanMove 2.1s ease-in-out infinite;
-    }
-
-    @keyframes scanMove {
-      0%, 100% { transform: translateY(-105px); opacity: .35; }
-      50% { transform: translateY(105px); opacity: 1; }
-    }
-
-    .scan-label {
-      position: fixed;
-      left: 50%;
-      bottom: calc(24px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      z-index: 15;
-      display: none;
-      width: min(90vw, 420px);
-      padding: 13px 16px;
-      border-radius: 999px;
-      text-align: center;
-      background: rgba(2,6,23,.68);
-      border: 1px solid rgba(255,255,255,.18);
-      backdrop-filter: blur(18px);
-      font-size: 14px;
-      font-weight: 900;
-    }
-
-    .video-layer {
-      position: fixed;
-      inset: 0;
-      z-index: 30;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,.28);
-      padding: 18px;
-    }
-
-    .video-wrap {
-      width: min(82vw, 380px);
-      aspect-ratio: 9 / 16;
-      border-radius: 30px;
-      padding: 3px;
-      background: linear-gradient(145deg, #00a2ff, #ffd700);
-      box-shadow: 0 0 70px rgba(0,162,255,.45), 0 26px 80px rgba(0,0,0,.7);
-      overflow: hidden;
-    }
-
-    #playerVideo {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
-      background: black;
-      border-radius: 27px;
-    }
-
-    .close-video {
-      position: fixed;
-      top: calc(18px + env(safe-area-inset-top));
-      right: 18px;
-      z-index: 9999;
-      display: none;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,.25);
-      background: rgba(2,6,23,.78);
-      color: white;
-      font-size: 28px;
-      cursor: pointer;
-    }
-
-    .audio-btn {
-      position: fixed;
-      left: 50%;
-      top: calc(78px + env(safe-area-inset-top));
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: none;
-      border: none;
-      border-radius: 999px;
-      padding: 13px 22px;
-      font-size: 15px;
-      font-weight: 950;
-      color: #06111f;
-      background: linear-gradient(135deg, #ffd700, #ffffff);
-      box-shadow: 0 18px 50px rgba(255,215,0,.45);
-      cursor: pointer;
-    }
-  </style>
+.audio-btn{
+position:fixed;top:80px;left:50%;
+transform:translateX(-50%);
+z-index:9999;display:none;
+padding:10px 20px;border:none;border-radius:999px;
+background:gold;color:black;font-weight:bold
+}
+</style>
 </head>
 
 <body>
 
-  <div class="overlay" id="ui">
-    <div class="card">
-      <div class="badge">Museo Maradona AR</div>
-      <div class="title">D10S</div>
-      <div class="sub">
-        Inquadra l’immagine del museo per sbloccare il contenuto in realtà aumentata.
-      </div>
-      <button class="btn" id="startBtn">Avvia esperienza</button>
-      <div class="hint">Consenti l’accesso alla fotocamera quando richiesto.</div>
-    </div>
+<div class="overlay" id="ui">
+  <div class="card">
+    <div class="title">D10S</div>
+    <button class="btn" id="startBtn">Avvia esperienza</button>
   </div>
+</div>
 
-  <div class="scan-frame" id="scanFrame">
-    <div class="scan-box">
-      <div class="corner c1"></div>
-      <div class="corner c2"></div>
-      <div class="corner c3"></div>
-      <div class="corner c4"></div>
-      <div class="scan-line"></div>
-    </div>
+<div class="scan-frame" id="scanFrame">
+  <div class="scan-box">
+    <div class="corner c1"></div>
+    <div class="corner c2"></div>
+    <div class="corner c3"></div>
+    <div class="corner c4"></div>
   </div>
+</div>
 
-  <div class="scan-label" id="scanLabel">Inquadra il target D10S</div>
+<div class="scan-label" id="scanLabel">Inquadra la maglia</div>
 
-  <button class="close-video" id="closeVideo">×</button>
-  <button class="audio-btn" id="audioBtn">🔊 Attiva audio</button>
+<button class="close-video" id="closeVideo">×</button>
+<button class="audio-btn" id="audioBtn">🔊 Audio</button>
 
-  <div class="video-layer" id="videoLayer">
-    <div class="video-wrap">
-      <video
-        id="playerVideo"
-        playsinline
-        webkit-playsinline
-        preload="auto">
-      </video>
-    </div>
-  </div>
+<div class="video-layer" id="videoLayer">
+  <video id="playerVideo" playsinline webkit-playsinline muted></video>
+</div>
 
-  <a-scene
-    mindar-image="imageTargetSrc: targets.mind; autoStart:false; filterMinCF:0.0001; filterBeta:0.01;"
-    embedded
-    color-space="sRGB"
-    renderer="colorManagement:true, physicallyCorrectLights:true"
-    vr-mode-ui="enabled:false"
-    device-orientation-permission-ui="enabled:false">
+<!-- SCENA AR -->
+<a-scene
+mindar-image="imageTargetSrc: ./targets.mind; autoStart:false; filterMinCF:0.0001; filterBeta:0.01;"
+embedded
+color-space="sRGB"
+renderer="colorManagement:true, physicallyCorrectLights:true"
+vr-mode-ui="enabled:false"
+device-orientation-permission-ui="enabled:false">
 
-    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+<a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <a-entity id="target0" mindar-image-target="targetIndex:0">
-      <a-ring position="0 0 0" radius-inner="0.58" radius-outer="0.62" color="#00a2ff" opacity="0.85"></a-ring>
-      <a-text value="D10S" position="0 -0.62 0" align="center" color="#FFD700" width="2.8"></a-text>
-    </a-entity>
+<a-entity id="target0" mindar-image-target="targetIndex:0"></a-entity>
+<a-entity id="target1" mindar-image-target="targetIndex:1"></a-entity>
+<a-entity id="target2" mindar-image-target="targetIndex:2"></a-entity>
 
-    <a-entity id="target1" mindar-image-target="targetIndex:1">
-      <a-ring position="0 0 0" radius-inner="0.58" radius-outer="0.62" color="#FFD700" opacity="0.85"></a-ring>
-      <a-text value="D10S" position="0 -0.62 0" align="center" color="#00a2ff" width="2.8"></a-text>
-    </a-entity>
+</a-scene>
 
-    <a-entity id="target2" mindar-image-target="targetIndex:2">
-      <a-ring position="0 0 0" radius-inner="0.58" radius-outer="0.62" color="#ffffff" opacity="0.85"></a-ring>
-      <a-text value="D10S" position="0 -0.62 0" align="center" color="#FFD700" width="2.8"></a-text>
-    </a-entity>
+<script>
+const startBtn=document.getElementById("startBtn");
+const ui=document.getElementById("ui");
+const scanFrame=document.getElementById("scanFrame");
+const scanLabel=document.getElementById("scanLabel");
+const videoLayer=document.getElementById("videoLayer");
+const playerVideo=document.getElementById("playerVideo");
+const closeVideo=document.getElementById("closeVideo");
+const audioBtn=document.getElementById("audioBtn");
+const scene=document.querySelector("a-scene");
 
-  </a-scene>
+const targets=[
+document.getElementById("target0"),
+document.getElementById("target1"),
+document.getElementById("target2")
+];
 
-  <script>
-    const startBtn = document.getElementById("startBtn");
-    const ui = document.getElementById("ui");
-    const scanLabel = document.getElementById("scanLabel");
-    const scanFrame = document.getElementById("scanFrame");
-    const videoLayer = document.getElementById("videoLayer");
-    const playerVideo = document.getElementById("playerVideo");
-    const closeVideo = document.getElementById("closeVideo");
-    const audioBtn = document.getElementById("audioBtn");
-    const scene = document.querySelector("a-scene");
+const videoMap={
+0:"video.mp4",
+1:"video1.mp4",
+2:"video2.mp4"
+};
 
-    const targets = [
-      document.getElementById("target0"),
-      document.getElementById("target1"),
-      document.getElementById("target2")
-    ];
+let playing=false;
 
-    const videoMap = {
-      0: "video.mp4",
-      1: "video1.mp4",
-      2: "video2.mp4"
-    };
+startBtn.onclick=async()=>{
+await scene.systems["mindar-image-system"].start();
+ui.style.display="none";
+scanFrame.style.display="block";
+scanLabel.style.display="block";
+};
 
-    let playing = false;
+targets.forEach((t,i)=>{
+t.addEventListener("targetFound",()=>{
+if(playing)return;
+playing=true;
 
-    function showScanner() {
-      scanFrame.style.display = "block";
-      scanLabel.style.display = "block";
-    }
+playerVideo.src=videoMap[i];
+playerVideo.currentTime=0;
+playerVideo.muted=true;
+playerVideo.load();
 
-    function hideScanner() {
-      scanFrame.style.display = "none";
-      scanLabel.style.display = "none";
-    }
+videoLayer.style.display="flex";
+closeVideo.style.display="block";
+audioBtn.style.display="block";
+scanFrame.style.display="none";
+scanLabel.style.display="none";
 
-    function showVideo() {
-      hideScanner();
-      videoLayer.style.display = "flex";
-      closeVideo.style.display = "block";
-      audioBtn.style.display = "block";
-    }
+playerVideo.play();
+});
+});
 
-    function hideVideo() {
-      videoLayer.style.display = "none";
-      closeVideo.style.display = "none";
-      audioBtn.style.display = "none";
-    }
+audioBtn.onclick=async()=>{
+playerVideo.muted=false;
+await playerVideo.play();
+audioBtn.style.display="none";
+};
 
-    async function playVideo(index) {
-      if (playing) return;
-      playing = true;
+function reset(){
+playing=false;
+playerVideo.pause();
+videoLayer.style.display="none";
+closeVideo.style.display="none";
+audioBtn.style.display="none";
+scanFrame.style.display="block";
+scanLabel.style.display="block";
+}
 
-      playerVideo.pause();
-      playerVideo.src = videoMap[index];
-      playerVideo.currentTime = 0;
-      playerVideo.muted = true;
-      playerVideo.setAttribute("muted", "");
-      playerVideo.setAttribute("playsinline", "");
-      playerVideo.setAttribute("webkit-playsinline", "");
-      playerVideo.load();
-
-      showVideo();
-
-      try {
-        await playerVideo.play();
-      } catch (e) {
-        console.log("Autoplay bloccato:", e);
-      }
-    }
-
-    async function activateAudio() {
-      try {
-        playerVideo.muted = false;
-        playerVideo.removeAttribute("muted");
-        playerVideo.volume = 1;
-        await playerVideo.play();
-        audioBtn.style.display = "none";
-      } catch (e) {
-        console.log("Errore audio:", e);
-        alert("Tocca di nuovo il pulsante audio.");
-      }
-    }
-
-    function resetVideo() {
-      playing = false;
-      playerVideo.pause();
-      playerVideo.currentTime = 0;
-      playerVideo.removeAttribute("src");
-      playerVideo.load();
-      hideVideo();
-      showScanner();
-    }
-
-    startBtn.addEventListener("click", async () => {
-      try {
-        await scene.systems["mindar-image-system"].start();
-        ui.style.display = "none";
-        showScanner();
-      } catch (e) {
-        alert("Errore avvio fotocamera. Controlla HTTPS e permessi.");
-        console.log(e);
-      }
-    });
-
-    targets.forEach((target, index) => {
-      target.addEventListener("targetFound", () => {
-        playVideo(index);
-      });
-    });
-
-    audioBtn.addEventListener("click", activateAudio);
-    closeVideo.addEventListener("click", resetVideo);
-    playerVideo.addEventListener("ended", resetVideo);
-  </script>
+closeVideo.onclick=reset;
+playerVideo.onended=reset;
+</script>
 
 </body>
 </html>
