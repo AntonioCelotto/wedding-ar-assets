@@ -191,19 +191,6 @@
       overflow: hidden;
     }
 
-    .video-wrap::before {
-      content: "";
-      position: absolute;
-      inset: -45%;
-      background: conic-gradient(from 180deg, transparent, rgba(255,255,255,.38), transparent 30%);
-      animation: borderGlow 4s linear infinite;
-      z-index: 0;
-    }
-
-    @keyframes borderGlow {
-      to { transform: rotate(360deg); }
-    }
-
     .video-wrap.show {
       opacity: 1;
       transform: scale(1) translateY(0);
@@ -355,7 +342,6 @@
       <div class="video-inner">
         <video
           id="playerVideo"
-          src="video.mp4"
           playsinline
           webkit-playsinline
           muted
@@ -376,23 +362,14 @@
 
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <a-entity id="target" mindar-image-target="targetIndex:0">
-      <a-ring
-        position="0 0 0"
-        radius-inner="0.58"
-        radius-outer="0.62"
-        color="#00a2ff"
-        opacity="0.85"
-        animation="property: rotation; to: 0 0 360; loop: true; dur: 5000; easing: linear">
-      </a-ring>
+    <a-entity id="target0" mindar-image-target="targetIndex:0">
+      <a-ring position="0 0 0" radius-inner="0.58" radius-outer="0.62" color="#00a2ff" opacity="0.85" animation="property: rotation; to: 0 0 360; loop: true; dur: 5000; easing: linear"></a-ring>
+      <a-text value="D10S" position="0 -0.62 0" align="center" color="#FFD700" width="2.8"></a-text>
+    </a-entity>
 
-      <a-text
-        value="D10S"
-        position="0 -0.62 0"
-        align="center"
-        color="#FFD700"
-        width="2.8">
-      </a-text>
+    <a-entity id="target1" mindar-image-target="targetIndex:1">
+      <a-ring position="0 0 0" radius-inner="0.58" radius-outer="0.62" color="#FFD700" opacity="0.85" animation="property: rotation; to: 0 0 360; loop: true; dur: 5000; easing: linear"></a-ring>
+      <a-text value="D10S" position="0 -0.62 0" align="center" color="#00a2ff" width="2.8"></a-text>
     </a-entity>
   </a-scene>
 
@@ -407,7 +384,13 @@
     const closeVideo = document.getElementById("closeVideo");
     const audioBtn = document.getElementById("audioBtn");
     const scene = document.querySelector("a-scene");
-    const target = document.getElementById("target");
+    const target0 = document.getElementById("target0");
+    const target1 = document.getElementById("target1");
+
+    const videoMap = {
+      0: "video.mp4",
+      1: "video1.mp4"
+    };
 
     let playing = false;
 
@@ -434,14 +417,14 @@
       }, 240);
     }
 
-    async function playVideo() {
+    async function playVideo(index) {
       if (playing) return;
 
       playing = true;
       scanLabel.style.display = "none";
 
       playerVideo.pause();
-      playerVideo.src = "video.mp4";
+      playerVideo.src = videoMap[index];
       playerVideo.load();
       playerVideo.currentTime = 0;
       playerVideo.muted = true;
@@ -493,7 +476,9 @@
       }
     };
 
-    target.addEventListener("targetFound", playVideo);
+    target0.addEventListener("targetFound", () => playVideo(0));
+    target1.addEventListener("targetFound", () => playVideo(1));
+
     playerVideo.addEventListener("ended", resetVideo);
     closeVideo.addEventListener("click", resetVideo);
     audioBtn.addEventListener("click", activateAudio);
