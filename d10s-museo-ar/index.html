@@ -10,73 +10,128 @@
 
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;background:#020617;color:white;font-family:Arial}
 
-/* NASCONDE UI MINDAR */
-.mindar-ui-overlay,.mindar-ui-scanning,.mindar-ui-loading,.mindar-ui-compatibility{
-display:none!important}
+html,body{
+margin:0;width:100%;height:100%;overflow:hidden;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+background:#020617;color:white;
+}
 
-/* SCENA */
-a-scene{position:fixed;inset:0;width:100vw;height:100vh;z-index:1}
+/* 🔴 FIX DOPPIO SCANNER */
+.mindar-ui-overlay,
+.mindar-ui-scanning,
+.mindar-ui-loading,
+.mindar-ui-compatibility{
+display:none!important;
+opacity:0!important;
+pointer-events:none!important;
+}
 
-/* UI INIZIALE */
+a-scene{
+position:fixed!important;
+inset:0!important;
+width:100vw!important;
+height:100vh!important;
+z-index:1;
+}
+
+/* UI */
 .overlay{
-position:fixed;inset:0;z-index:50;
+position:fixed;inset:0;
 display:flex;align-items:center;justify-content:center;
-background:linear-gradient(135deg,#020617,#061b3a)
+z-index:30;
+background:linear-gradient(135deg,#020617,#061b3a);
 }
+
 .card{
-text-align:center;padding:30px;border-radius:20px;
-background:rgba(255,255,255,.1);backdrop-filter:blur(20px)
+padding:30px;
+border-radius:30px;
+background:rgba(255,255,255,.1);
+text-align:center;
 }
-.title{font-size:60px;font-weight:900}
+
+.title{
+font-size:70px;
+font-weight:900;
+background:linear-gradient(90deg,#fff,#00a2ff,#ffd700);
+-webkit-background-clip:text;
+color:transparent;
+}
+
 .btn{
-margin-top:20px;padding:15px 25px;border:none;border-radius:999px;
-background:#00a2ff;color:white;font-weight:bold;cursor:pointer
+margin-top:20px;
+padding:15px 25px;
+border:none;border-radius:999px;
+background:#00a2ff;color:white;
+font-weight:bold;cursor:pointer;
 }
 
 /* SCANNER */
-.scan-frame{position:fixed;inset:0;z-index:10;display:none}
-.scan-box{
-position:absolute;top:50%;left:50%;
-width:300px;height:250px;
-transform:translate(-50%,-50%)
+.scan-frame{
+position:fixed;inset:0;
+z-index:12;
+display:none;
+pointer-events:none;
 }
-.corner{position:absolute;width:50px;height:50px;border:6px solid white}
+
+.scan-box{
+position:absolute;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+width:320px;height:260px;
+}
+
+.corner{
+position:absolute;
+width:60px;height:60px;
+border:6px solid white;
+}
+
 .c1{top:0;left:0;border-right:none;border-bottom:none}
 .c2{top:0;right:0;border-left:none;border-bottom:none}
 .c3{bottom:0;left:0;border-right:none;border-top:none}
 .c4{bottom:0;right:0;border-left:none;border-top:none}
 
 .scan-label{
-position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-z-index:20;display:none;font-weight:bold
+position:fixed;
+bottom:20px;left:50%;
+transform:translateX(-50%);
+z-index:15;
+display:none;
 }
 
 /* VIDEO */
 .video-layer{
-position:fixed;inset:0;z-index:30;display:none;
-align-items:center;justify-content:center;
-background:rgba(0,0,0,.4)
+position:fixed;inset:0;
+z-index:25;
+display:none;
+align-items:center;
+justify-content:center;
 }
+
+.video-wrap{
+width:80vw;
+max-width:360px;
+}
+
 #playerVideo{
-width:80vw;max-width:360px;background:black
+width:100%;
+background:black;
 }
 
 .close-video{
-position:fixed;top:20px;right:20px;
-z-index:9999;display:none;
-background:black;color:white;border:none;
-width:40px;height:40px;border-radius:50%;
-font-size:20px;cursor:pointer
+position:fixed;
+top:20px;right:20px;
+z-index:9999;
+display:none;
 }
 
 .audio-btn{
-position:fixed;top:80px;left:50%;
+position:fixed;
+top:70px;left:50%;
 transform:translateX(-50%);
-z-index:9999;display:none;
-padding:10px 20px;border:none;border-radius:999px;
-background:gold;color:black;font-weight:bold
+z-index:9999;
+display:none;
 }
 </style>
 </head>
@@ -99,23 +154,21 @@ background:gold;color:black;font-weight:bold
   </div>
 </div>
 
-<div class="scan-label" id="scanLabel">Inquadra la maglia</div>
+<div class="scan-label" id="scanLabel">Inquadra il target</div>
 
-<button class="close-video" id="closeVideo">×</button>
+<button class="close-video" id="closeVideo">X</button>
 <button class="audio-btn" id="audioBtn">🔊 Audio</button>
 
 <div class="video-layer" id="videoLayer">
-  <video id="playerVideo" playsinline webkit-playsinline muted></video>
+  <div class="video-wrap">
+    <video id="playerVideo" playsinline webkit-playsinline muted></video>
+  </div>
 </div>
 
-<!-- SCENA AR -->
 <a-scene
-mindar-image="imageTargetSrc: ./targets.mind; autoStart:false; filterMinCF:0.0001; filterBeta:0.01;"
+mindar-image="imageTargetSrc: targets.mind; autoStart:false; filterMinCF:0.0001; filterBeta:0.01;"
 embedded
-color-space="sRGB"
-renderer="colorManagement:true, physicallyCorrectLights:true"
-vr-mode-ui="enabled:false"
-device-orientation-permission-ui="enabled:false">
+vr-mode-ui="enabled:false">
 
 <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
@@ -170,6 +223,7 @@ playerVideo.load();
 videoLayer.style.display="flex";
 closeVideo.style.display="block";
 audioBtn.style.display="block";
+
 scanFrame.style.display="none";
 scanLabel.style.display="none";
 
