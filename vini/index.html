@@ -1,98 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <title>Esperienza AR Vino</title>
 
-  <!-- A-Frame + MindAR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     :root {
-      --verde: #5f8f70;
-      --verde-scuro: #183d2a;
+      --verde: #163d2a;
+      --verde-2: #5f8f70;
       --oro: #d8a94a;
-      --oro-chiaro: #f0d58a;
+      --oro-2: #f0d58a;
       --bianco: #ffffff;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--verde-scuro);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: var(--verde);
       color: var(--bianco);
-    }
-
-    #startScreen {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 28px;
-      background:
-        radial-gradient(circle at top, rgba(216,169,74,0.20), transparent 35%),
-        linear-gradient(160deg, #6f9d7c 0%, #2e6545 45%, #143323 100%);
-      text-align: center;
-    }
-
-    .card {
-      width: min(92vw, 430px);
-      padding: 28px 24px;
-      border-radius: 24px;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(240,213,138,0.45);
-      box-shadow: 0 18px 60px rgba(0,0,0,0.35);
-      backdrop-filter: blur(10px);
-    }
-
-    .card h1 {
-      margin: 0 0 10px;
-      font-size: 28px;
-      letter-spacing: 0.5px;
-      color: var(--oro-chiaro);
-    }
-
-    .card p {
-      margin: 0 auto 22px;
-      font-size: 16px;
-      line-height: 1.45;
-      opacity: 0.95;
-    }
-
-    #startButton {
-      width: 100%;
-      border: none;
-      border-radius: 999px;
-      padding: 15px 18px;
-      background: linear-gradient(135deg, var(--oro-chiaro), var(--oro));
-      color: #1c2d1f;
-      font-size: 17px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 8px 22px rgba(216,169,74,0.35);
-    }
-
-    #status {
-      margin-top: 14px;
-      min-height: 22px;
-      font-size: 14px;
-      opacity: 0.9;
-    }
-
-    #arContainer {
-      position: fixed;
-      inset: 0;
-      display: none;
-      background: transparent;
     }
 
     a-scene {
@@ -100,234 +37,363 @@
       inset: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
+      z-index: 1;
       background: transparent !important;
     }
 
-    video, canvas {
-      background: transparent !important;
+    canvas.a-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+      display: block !important;
     }
 
-    /* Rende trasparente la UI di scansione MindAR ed elimina effetti scuri/laterali */
-    .mindar-ui-overlay,
-    .mindar-ui-loading,
-    .mindar-ui-compatibility,
-    .mindar-ui-scanning {
-      background: transparent !important;
-      pointer-events: none !important;
-    }
-
-    .mindar-ui-scanning .scanning,
-    .mindar-ui-scanning .scanning .inner,
-    .mindar-ui-scanning .scanning .scanline {
-      display: none !important;
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-
-    #hint {
+    .overlay {
       position: fixed;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%);
+      inset: 0;
       z-index: 20;
-      width: min(92vw, 420px);
-      padding: 12px 16px;
-      border-radius: 999px;
-      text-align: center;
-      background: rgba(24,61,42,0.72);
-      border: 1px solid rgba(216,169,74,0.65);
-      color: var(--oro-chiaro);
-      font-size: 14px;
-      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(240,213,138,.32), rgba(240,213,138,0) 48%),
+        linear-gradient(180deg, #5f8f70 0%, #163d2a 100%);
     }
 
-    #replayButton {
-      position: fixed;
-      right: 18px;
-      top: 18px;
-      z-index: 30;
-      display: none;
+    .card {
+      width: min(560px, 100%);
+      padding: 24px 20px;
+      border-radius: 24px;
+      text-align: center;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(240,213,138,.38);
+      box-shadow: 0 20px 60px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+    }
+
+    .title {
+      margin: 0 0 10px;
+      font-size: 25px;
+      font-weight: 900;
+      color: var(--oro-2);
+      letter-spacing: .2px;
+    }
+
+    .sub {
+      margin: 0 auto 18px;
+      max-width: 390px;
+      font-size: 15px;
+      line-height: 1.45;
+      color: rgba(255,255,255,.92);
+    }
+
+    .btn {
       border: none;
       border-radius: 999px;
-      padding: 11px 15px;
-      background: linear-gradient(135deg, var(--oro-chiaro), var(--oro));
-      color: #1c2d1f;
-      font-weight: 700;
+      padding: 14px 22px;
+      font-size: 17px;
+      font-weight: 900;
       cursor: pointer;
+      background: linear-gradient(180deg, var(--oro-2), var(--oro));
+      color: #17351f;
+      box-shadow: 0 12px 28px rgba(0,0,0,.25);
+    }
+
+    .btn:active {
+      transform: scale(.98);
+    }
+
+    .pill {
+      position: fixed;
+      top: calc(10px + env(safe-area-inset-top));
+      left: 10px;
+      right: 10px;
+      z-index: 30;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .badge {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(22,61,42,.72);
+      border: 1px solid rgba(240,213,138,.45);
+      color: #fff;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.22);
+    }
+
+    .badge strong {
+      color: var(--oro-2);
+      font-weight: 900;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .video-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 8vh 18px 18px;
+      pointer-events: none;
+    }
+
+    .video-wrap {
+      position: relative;
+      width: min(82vw, 430px);
+      aspect-ratio: 9 / 16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(.78) translateY(32px);
+      transition: transform 420ms cubic-bezier(.2,.8,.2,1), opacity 320ms ease-out;
+      will-change: transform, opacity;
+    }
+
+    .video-wrap.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    #vinoVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      border-radius: 20px;
+      background: transparent;
+      box-shadow:
+        0 24px 70px rgba(0,0,0,.35),
+        0 0 0 1px rgba(240,213,138,.35) inset;
+    }
+
+    .video-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 9%;
+      z-index: -1;
+      border-radius: 28px;
+      background: radial-gradient(circle, rgba(240,213,138,.34), rgba(240,213,138,0) 70%);
+      filter: blur(18px);
+      opacity: 0;
+      transition: opacity 420ms ease-out;
+    }
+
+    .video-wrap.show::before {
+      opacity: 1;
     }
   </style>
 </head>
+
 <body>
-  <div id="startScreen">
+
+  <div class="pill">
+    <div class="badge" id="status"><strong>AR</strong> pronta</div>
+    <div class="badge hidden" id="hint">Inquadra l'etichetta</div>
+  </div>
+
+  <div class="overlay" id="ui">
     <div class="card">
-      <h1>Esperienza AR</h1>
-      <p>Premi il pulsante, autorizza fotocamera e audio, poi inquadra l'etichetta della bottiglia.</p>
-      <button id="startButton">Avvia esperienza</button>
-      <div id="status"></div>
+      <div class="title">Esperienza AR Vino</div>
+      <div class="sub">Premi il pulsante poi inquadra l'etichetta della bottiglia.</div>
+      <button class="btn" id="startBtn">Avvia esperienza</button>
     </div>
   </div>
 
-  <div id="arContainer">
-    <div id="hint">Inquadra la bottiglia</div>
-    <button id="replayButton">Ripeti</button>
-
-    <a-scene
-      id="scene"
-      mindar-image="imageTargetSrc: ./vini/vino.mind; autoStart: false; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 0.001"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true, antialias: true"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      embedded>
-
-      <a-assets>
-        <video
-          id="arVideo"
-          src="./assets/videos/vino.mp4"
-          preload="auto"
-          playsinline
-          webkit-playsinline
-          crossorigin="anonymous"></video>
-
-        <audio
-          id="arAudio"
-          src="./assets/audio/vino.mp3"
-          preload="auto"
-          crossorigin="anonymous"></audio>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity id="target" mindar-image-target="targetIndex: 0">
-        <!-- Grandezza video: aumenta/diminuisci width e height se vuoi -->
-        <a-video
-          id="videoPlane"
-          src="#arVideo"
-          width="1.35"
-          height="0.76"
-          position="0 0 0.04"
-          rotation="0 0 0"
-          visible="false">
-        </a-video>
-      </a-entity>
-    </a-scene>
+  <div class="video-layer" id="videoLayer">
+    <div class="video-wrap" id="videoWrap">
+      <video
+        id="vinoVideo"
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        muted
+        crossorigin="anonymous">
+        <source src="./assets/videos/vino.mp4" type="video/mp4">
+      </video>
+    </div>
   </div>
 
+  <audio id="vinoAudio" preload="auto">
+    <source src="./assets/audio/vino.mp3" type="audio/mpeg">
+  </audio>
+
+  <a-scene
+    mindar-image="imageTargetSrc: ./vini/targets.mind; autoStart: false; maxTrack: 1; uiLoading: no; uiError: no; uiScanning: no;"
+    embedded
+    renderer="alpha: true; antialias: true; colorManagement: true;"
+    vr-mode-ui="enabled:false"
+    device-orientation-permission-ui="enabled:false">
+
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+    <a-entity id="target0" mindar-image-target="targetIndex: 0"></a-entity>
+
+  </a-scene>
+
   <script>
-    const startScreen = document.getElementById("startScreen");
-    const startButton = document.getElementById("startButton");
-    const statusEl = document.getElementById("status");
-    const arContainer = document.getElementById("arContainer");
-    const sceneEl = document.getElementById("scene");
-    const targetEl = document.getElementById("target");
-    const video = document.getElementById("arVideo");
-    const audio = document.getElementById("arAudio");
-    const videoPlane = document.getElementById("videoPlane");
+    const ui = document.getElementById("ui");
+    const startBtn = document.getElementById("startBtn");
+    const status = document.getElementById("status");
     const hint = document.getElementById("hint");
-    const replayButton = document.getElementById("replayButton");
 
-    let arSystem = null;
-    let hasPlayed = false;
-    let isPlaying = false;
-    let mediaStream = null;
+    const videoLayer = document.getElementById("videoLayer");
+    const videoWrap = document.getElementById("videoWrap");
+    const vinoVideo = document.getElementById("vinoVideo");
+    const vinoAudio = document.getElementById("vinoAudio");
 
-    async function requestConsent() {
-      mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: true
-      });
+    const scene = document.querySelector("a-scene");
+    const target = document.getElementById("target0");
 
-      // Rilascia subito il microfono: serve solo a far comparire il consenso audio.
-      mediaStream.getAudioTracks().forEach(track => track.stop());
+    let foundOnce = false;
+    let playing = false;
+
+    function setStatus(text) {
+      status.innerHTML = "<strong>AR</strong> " + text;
     }
 
-    async function startAR() {
-      statusEl.textContent = "Richiesta consensi...";
-      await requestConsent();
+    function stopVideo() {
+      try {
+        vinoVideo.pause();
+        vinoVideo.currentTime = 0;
+      } catch (e) {}
+    }
 
-      statusEl.textContent = "Avvio fotocamera AR...";
-      arContainer.style.display = "block";
-      startScreen.style.display = "none";
+    function stopAudio() {
+      try {
+        vinoAudio.pause();
+        vinoAudio.currentTime = 0;
+      } catch (e) {}
+    }
 
-      if (!sceneEl.hasLoaded) {
-        await new Promise(resolve => sceneEl.addEventListener("loaded", resolve, { once: true }));
+    async function unlockMedia() {
+      try {
+        vinoVideo.muted = true;
+        await vinoVideo.play();
+        vinoVideo.pause();
+        vinoVideo.currentTime = 0;
+      } catch (e) {
+        console.warn("Sblocco video non riuscito:", e);
       }
 
-      arSystem = sceneEl.systems["mindar-image-system"];
-      await arSystem.start();
-      hint.textContent = "Inquadra la bottiglia";
+      try {
+        await vinoAudio.play();
+        vinoAudio.pause();
+        vinoAudio.currentTime = 0;
+      } catch (e) {
+        console.warn("Sblocco audio non riuscito:", e);
+      }
+    }
+
+    function showVideo() {
+      videoLayer.style.display = "flex";
+      requestAnimationFrame(() => {
+        videoWrap.classList.add("show");
+      });
+    }
+
+    function hideVideo() {
+      videoWrap.classList.remove("show");
+      setTimeout(() => {
+        videoLayer.style.display = "none";
+      }, 240);
     }
 
     async function playExperience() {
-      if (hasPlayed || isPlaying) return;
+      if (playing || foundOnce) return;
 
-      hasPlayed = true;
-      isPlaying = true;
-      hint.textContent = "Esperienza in corso";
-      replayButton.style.display = "none";
-      videoPlane.setAttribute("visible", "true");
+      foundOnce = true;
+      playing = true;
 
-      video.currentTime = 0;
-      audio.currentTime = 0;
-      video.muted = true; // l'audio principale arriva dall'MP3, così resta sincronizzato e controllabile
+      setStatus("target trovato");
+      hint.textContent = "Video in riproduzione";
+
+      stopVideo();
+      stopAudio();
+      showVideo();
 
       try {
-        await Promise.all([
-          video.play(),
-          audio.play()
-        ]);
-      } catch (err) {
-        console.error("Errore avvio video/audio:", err);
-        hint.textContent = "Tocca lo schermo per avviare audio e video";
+        vinoVideo.muted = true;
+        vinoVideo.currentTime = 0;
+        await vinoVideo.play();
+      } catch (e) {
+        console.error("Errore video:", e);
+        setStatus("errore video");
       }
-    }
 
-    function finishExperience() {
-      isPlaying = false;
-      video.pause();
-      audio.pause();
-      videoPlane.setAttribute("visible", "false");
-      hint.textContent = "Video terminato. Puoi ripetere l'esperienza.";
-      replayButton.style.display = "block";
-    }
-
-    function resetExperience() {
-      hasPlayed = false;
-      isPlaying = false;
-      video.currentTime = 0;
-      audio.currentTime = 0;
-      videoPlane.setAttribute("visible", "false");
-      replayButton.style.display = "none";
-      hint.textContent = "Inquadra la bottiglia";
-    }
-
-    startButton.addEventListener("click", async () => {
       try {
-        await startAR();
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Consenso negato o fotocamera non disponibile.";
+        vinoAudio.currentTime = 0;
+        await vinoAudio.play();
+      } catch (e) {
+        console.error("Errore audio:", e);
+        setStatus("video senza audio");
+      }
+    }
+
+    startBtn.addEventListener("click", async () => {
+      startBtn.disabled = true;
+      startBtn.textContent = "Avvio...";
+
+      try {
+        await unlockMedia();
+
+        const mindarSystem = scene.systems["mindar-image-system"];
+        await mindarSystem.start();
+
+        ui.style.display = "none";
+        hint.classList.remove("hidden");
+        hint.textContent = "Inquadra l'etichetta";
+        setStatus("inquadra l'etichetta");
+      } catch (e) {
+        console.error("Errore avvio AR:", e);
+        setStatus("errore avvio");
+        startBtn.disabled = false;
+        startBtn.textContent = "Riprova";
       }
     });
 
-    targetEl.addEventListener("targetFound", () => {
-      if (!isPlaying && !hasPlayed) playExperience();
+    target.addEventListener("targetFound", async () => {
+      await playExperience();
     });
 
-    targetEl.addEventListener("targetLost", () => {
-      if (!isPlaying && !hasPlayed) {
-        hint.textContent = "Riposiziona la bottiglia nell'inquadratura";
+    target.addEventListener("targetLost", () => {
+      // Volutamente ignorato:
+      // dopo il primo riconoscimento il video e l'audio continuano fino alla fine.
+      // Non viene cercato un nuovo target finché il video non termina.
+    });
+
+    vinoVideo.addEventListener("ended", async () => {
+      stopAudio();
+      playing = false;
+      setStatus("esperienza terminata");
+      hint.textContent = "Video terminato";
+      hideVideo();
+
+      try {
+        await scene.systems["mindar-image-system"].stop();
+      } catch (e) {}
+    });
+
+    window.addEventListener("resize", () => {
+      const canvas = document.querySelector("canvas.a-canvas");
+      if (canvas) {
+        canvas.style.width = "100vw";
+        canvas.style.height = "100vh";
       }
     });
-
-    audio.addEventListener("ended", finishExperience);
-    video.addEventListener("ended", () => {
-      if (!audio.paused) return;
-      finishExperience();
-    });
-
-    replayButton.addEventListener("click", resetExperience);
   </script>
+
 </body>
 </html>
