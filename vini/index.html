@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Esperienza AR Vino</title>
+
+  <!-- A-Frame + MindAR -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    :root {
+      --verde: #5f8f70;
+      --verde-scuro: #183d2a;
+      --oro: #d8a94a;
+      --oro-chiaro: #f0d58a;
+      --bianco: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--verde-scuro);
+      color: var(--bianco);
+    }
+
+    #startScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      background:
+        radial-gradient(circle at top, rgba(216,169,74,0.20), transparent 35%),
+        linear-gradient(160deg, #6f9d7c 0%, #2e6545 45%, #143323 100%);
+      text-align: center;
+    }
+
+    .card {
+      width: min(92vw, 430px);
+      padding: 28px 24px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(240,213,138,0.45);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    .card h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      letter-spacing: 0.5px;
+      color: var(--oro-chiaro);
+    }
+
+    .card p {
+      margin: 0 auto 22px;
+      font-size: 16px;
+      line-height: 1.45;
+      opacity: 0.95;
+    }
+
+    #startButton {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 15px 18px;
+      background: linear-gradient(135deg, var(--oro-chiaro), var(--oro));
+      color: #1c2d1f;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(216,169,74,0.35);
+    }
+
+    #status {
+      margin-top: 14px;
+      min-height: 22px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    #arContainer {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: transparent;
+    }
+
+    a-scene {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: transparent !important;
+    }
+
+    video, canvas {
+      background: transparent !important;
+    }
+
+    /* Rende trasparente la UI di scansione MindAR ed elimina effetti scuri/laterali */
+    .mindar-ui-overlay,
+    .mindar-ui-loading,
+    .mindar-ui-compatibility,
+    .mindar-ui-scanning {
+      background: transparent !important;
+      pointer-events: none !important;
+    }
+
+    .mindar-ui-scanning .scanning,
+    .mindar-ui-scanning .scanning .inner,
+    .mindar-ui-scanning .scanning .scanline {
+      display: none !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    #hint {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: min(92vw, 420px);
+      padding: 12px 16px;
+      border-radius: 999px;
+      text-align: center;
+      background: rgba(24,61,42,0.72);
+      border: 1px solid rgba(216,169,74,0.65);
+      color: var(--oro-chiaro);
+      font-size: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    #replayButton {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      z-index: 30;
+      display: none;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 15px;
+      background: linear-gradient(135deg, var(--oro-chiaro), var(--oro));
+      color: #1c2d1f;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="startScreen">
+    <div class="card">
+      <h1>Esperienza AR</h1>
+      <p>Premi il pulsante, autorizza fotocamera e audio, poi inquadra l'etichetta della bottiglia.</p>
+      <button id="startButton">Avvia esperienza</button>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <div id="arContainer">
+    <div id="hint">Inquadra la bottiglia</div>
+    <button id="replayButton">Ripeti</button>
+
+    <a-scene
+      id="scene"
+      mindar-image="imageTargetSrc: ./vini/vino.mind; autoStart: false; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 0.001"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true, antialias: true"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      embedded>
+
+      <a-assets>
+        <video
+          id="arVideo"
+          src="./assets/videos/vino.mp4"
+          preload="auto"
+          playsinline
+          webkit-playsinline
+          crossorigin="anonymous"></video>
+
+        <audio
+          id="arAudio"
+          src="./assets/audio/vino.mp3"
+          preload="auto"
+          crossorigin="anonymous"></audio>
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity id="target" mindar-image-target="targetIndex: 0">
+        <!-- Grandezza video: aumenta/diminuisci width e height se vuoi -->
+        <a-video
+          id="videoPlane"
+          src="#arVideo"
+          width="1.35"
+          height="0.76"
+          position="0 0 0.04"
+          rotation="0 0 0"
+          visible="false">
+        </a-video>
+      </a-entity>
+    </a-scene>
+  </div>
+
+  <script>
+    const startScreen = document.getElementById("startScreen");
+    const startButton = document.getElementById("startButton");
+    const statusEl = document.getElementById("status");
+    const arContainer = document.getElementById("arContainer");
+    const sceneEl = document.getElementById("scene");
+    const targetEl = document.getElementById("target");
+    const video = document.getElementById("arVideo");
+    const audio = document.getElementById("arAudio");
+    const videoPlane = document.getElementById("videoPlane");
+    const hint = document.getElementById("hint");
+    const replayButton = document.getElementById("replayButton");
+
+    let arSystem = null;
+    let hasPlayed = false;
+    let isPlaying = false;
+    let mediaStream = null;
+
+    async function requestConsent() {
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: true
+      });
+
+      // Rilascia subito il microfono: serve solo a far comparire il consenso audio.
+      mediaStream.getAudioTracks().forEach(track => track.stop());
+    }
+
+    async function startAR() {
+      statusEl.textContent = "Richiesta consensi...";
+      await requestConsent();
+
+      statusEl.textContent = "Avvio fotocamera AR...";
+      arContainer.style.display = "block";
+      startScreen.style.display = "none";
+
+      if (!sceneEl.hasLoaded) {
+        await new Promise(resolve => sceneEl.addEventListener("loaded", resolve, { once: true }));
+      }
+
+      arSystem = sceneEl.systems["mindar-image-system"];
+      await arSystem.start();
+      hint.textContent = "Inquadra la bottiglia";
+    }
+
+    async function playExperience() {
+      if (hasPlayed || isPlaying) return;
+
+      hasPlayed = true;
+      isPlaying = true;
+      hint.textContent = "Esperienza in corso";
+      replayButton.style.display = "none";
+      videoPlane.setAttribute("visible", "true");
+
+      video.currentTime = 0;
+      audio.currentTime = 0;
+      video.muted = true; // l'audio principale arriva dall'MP3, così resta sincronizzato e controllabile
+
+      try {
+        await Promise.all([
+          video.play(),
+          audio.play()
+        ]);
+      } catch (err) {
+        console.error("Errore avvio video/audio:", err);
+        hint.textContent = "Tocca lo schermo per avviare audio e video";
+      }
+    }
+
+    function finishExperience() {
+      isPlaying = false;
+      video.pause();
+      audio.pause();
+      videoPlane.setAttribute("visible", "false");
+      hint.textContent = "Video terminato. Puoi ripetere l'esperienza.";
+      replayButton.style.display = "block";
+    }
+
+    function resetExperience() {
+      hasPlayed = false;
+      isPlaying = false;
+      video.currentTime = 0;
+      audio.currentTime = 0;
+      videoPlane.setAttribute("visible", "false");
+      replayButton.style.display = "none";
+      hint.textContent = "Inquadra la bottiglia";
+    }
+
+    startButton.addEventListener("click", async () => {
+      try {
+        await startAR();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Consenso negato o fotocamera non disponibile.";
+      }
+    });
+
+    targetEl.addEventListener("targetFound", () => {
+      if (!isPlaying && !hasPlayed) playExperience();
+    });
+
+    targetEl.addEventListener("targetLost", () => {
+      if (!isPlaying && !hasPlayed) {
+        hint.textContent = "Riposiziona la bottiglia nell'inquadratura";
+      }
+    });
+
+    audio.addEventListener("ended", finishExperience);
+    video.addEventListener("ended", () => {
+      if (!audio.paused) return;
+      finishExperience();
+    });
+
+    replayButton.addEventListener("click", resetExperience);
+  </script>
+</body>
+</html>
