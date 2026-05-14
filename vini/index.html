@@ -1,35 +1,81 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Esperienza AR Vino</title>
 
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     :root {
-      --verde: #163d2a;
-      --verde-2: #5f8f70;
+      --verde-scuro: #163d2a;
+      --verde: #5f8f70;
       --oro: #d8a94a;
-      --oro-2: #f0d58a;
-      --bianco: #ffffff;
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+      --oro-chiaro: #f0d58a;
     }
 
     html, body {
       margin: 0;
-      width: 100%;
-      height: 100%;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background: var(--verde);
-      color: var(--bianco);
+      background: #000;
+      font-family: Arial, sans-serif;
+    }
+
+    #startScreen {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at center, rgba(240,213,138,.28) 0%, rgba(240,213,138,0) 46%),
+        linear-gradient(180deg, var(--verde) 0%, var(--verde-scuro) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      color: #fff;
+      text-align: center;
+      padding: 24px;
+    }
+
+    #startScreen h1 {
+      margin: 0 0 12px 0;
+      font-size: 28px;
+      letter-spacing: 0.5px;
+      color: var(--oro-chiaro);
+    }
+
+    #startScreen p {
+      margin: 0 0 22px 0;
+      font-size: 15px;
+      max-width: 340px;
+      line-height: 1.5;
+      color: rgba(255,255,255,.92);
+    }
+
+    #startButton {
+      background: linear-gradient(180deg, var(--oro-chiaro), var(--oro));
+      color: #17351f;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 0 24px rgba(216,169,74,0.35);
+    }
+
+    #startButton:active {
+      transform: scale(.98);
+    }
+
+    #debugBox,
+    #scanText {
+      display: none !important;
     }
 
     a-scene {
@@ -37,363 +83,335 @@
       inset: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      z-index: 1;
+      overflow: hidden !important;
+      z-index: 10;
       background: transparent !important;
     }
 
-    canvas.a-canvas {
+    video,
+    canvas,
+    .a-canvas {
+      position: fixed !important;
+      inset: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      display: block !important;
+      min-width: 100vw !important;
+      min-height: 100vh !important;
+      object-fit: cover !important;
+      background: transparent !important;
     }
 
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 22px;
-      background:
-        radial-gradient(circle at 50% 20%, rgba(240,213,138,.32), rgba(240,213,138,0) 48%),
-        linear-gradient(180deg, #5f8f70 0%, #163d2a 100%);
+    video {
+      z-index: 1 !important;
+      transform: scale(1.01);
+      transform-origin: center center;
     }
 
-    .card {
-      width: min(560px, 100%);
-      padding: 24px 20px;
-      border-radius: 24px;
-      text-align: center;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(240,213,138,.38);
-      box-shadow: 0 20px 60px rgba(0,0,0,.28);
-      backdrop-filter: blur(12px);
-    }
-
-    .title {
-      margin: 0 0 10px;
-      font-size: 25px;
-      font-weight: 900;
-      color: var(--oro-2);
-      letter-spacing: .2px;
-    }
-
-    .sub {
-      margin: 0 auto 18px;
-      max-width: 390px;
-      font-size: 15px;
-      line-height: 1.45;
-      color: rgba(255,255,255,.92);
-    }
-
-    .btn {
-      border: none;
-      border-radius: 999px;
-      padding: 14px 22px;
-      font-size: 17px;
-      font-weight: 900;
-      cursor: pointer;
-      background: linear-gradient(180deg, var(--oro-2), var(--oro));
-      color: #17351f;
-      box-shadow: 0 12px 28px rgba(0,0,0,.25);
-    }
-
-    .btn:active {
-      transform: scale(.98);
-    }
-
-    .pill {
-      position: fixed;
-      top: calc(10px + env(safe-area-inset-top));
-      left: 10px;
-      right: 10px;
-      z-index: 30;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      pointer-events: none;
-    }
-
-    .badge {
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: rgba(22,61,42,.72);
-      border: 1px solid rgba(240,213,138,.45);
-      color: #fff;
-      font-size: 13px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.22);
-    }
-
-    .badge strong {
-      color: var(--oro-2);
-      font-weight: 900;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .video-layer {
-      position: fixed;
-      inset: 0;
-      z-index: 25;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 8vh 18px 18px;
-      pointer-events: none;
-    }
-
-    .video-wrap {
-      position: relative;
-      width: min(82vw, 430px);
-      aspect-ratio: 9 / 16;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transform: scale(.78) translateY(32px);
-      transition: transform 420ms cubic-bezier(.2,.8,.2,1), opacity 320ms ease-out;
-      will-change: transform, opacity;
-    }
-
-    .video-wrap.show {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-
-    #vinoVideo {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      border-radius: 20px;
-      background: transparent;
-      box-shadow:
-        0 24px 70px rgba(0,0,0,.35),
-        0 0 0 1px rgba(240,213,138,.35) inset;
-    }
-
-    .video-wrap::before {
-      content: "";
-      position: absolute;
-      inset: 9%;
-      z-index: -1;
-      border-radius: 28px;
-      background: radial-gradient(circle, rgba(240,213,138,.34), rgba(240,213,138,0) 70%);
-      filter: blur(18px);
-      opacity: 0;
-      transition: opacity 420ms ease-out;
-    }
-
-    .video-wrap.show::before {
-      opacity: 1;
+    canvas,
+    .a-canvas {
+      z-index: 2 !important;
     }
   </style>
 </head>
 
 <body>
-
-  <div class="pill">
-    <div class="badge" id="status"><strong>AR</strong> pronta</div>
-    <div class="badge hidden" id="hint">Inquadra l'etichetta</div>
+  <div id="startScreen">
+    <h1>Esperienza AR Vino</h1>
+    <p>Premi il pulsante poi inquadra l'etichetta della bottiglia.</p>
+    <button id="startButton">Avvia esperienza</button>
   </div>
 
-  <div class="overlay" id="ui">
-    <div class="card">
-      <div class="title">Esperienza AR Vino</div>
-      <div class="sub">Premi il pulsante poi inquadra l'etichetta della bottiglia.</div>
-      <button class="btn" id="startBtn">Avvia esperienza</button>
-    </div>
-  </div>
-
-  <div class="video-layer" id="videoLayer">
-    <div class="video-wrap" id="videoWrap">
-      <video
-        id="vinoVideo"
-        playsinline
-        webkit-playsinline
-        preload="auto"
-        muted
-        crossorigin="anonymous">
-        <source src="./assets/videos/vino.mp4" type="video/mp4">
-      </video>
-    </div>
-  </div>
-
-  <audio id="vinoAudio" preload="auto">
-    <source src="./assets/audio/vino.mp3" type="audio/mpeg">
-  </audio>
+  <div id="debugBox">Stato: attesa avvio</div>
+  <div id="scanText">Inquadra l'etichetta</div>
 
   <a-scene
-    mindar-image="imageTargetSrc: ./vini/targets.mind; autoStart: false; maxTrack: 1; uiLoading: no; uiError: no; uiScanning: no;"
-    embedded
-    renderer="alpha: true; antialias: true; colorManagement: true;"
-    vr-mode-ui="enabled:false"
-    device-orientation-permission-ui="enabled:false">
+    id="arScene"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    loading-screen="enabled: false"
+    renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
+    color-space="sRGB"
+    mindar-image="imageTargetSrc: ./vini/targets.mind; uiLoading: no; uiScanning: no; uiError: no; autoStart: false;"
+  >
+    <a-assets>
+      <video
+        id="vinoVideo"
+        src="./assets/videos/vino.mp4"
+        preload="auto"
+        playsinline
+        webkit-playsinline
+        crossorigin="anonymous"
+        muted
+      ></video>
 
-    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
-    <a-entity id="target0" mindar-image-target="targetIndex: 0"></a-entity>
+      <audio
+        id="vinoAudio"
+        src="./assets/audio/vino.mp3"
+        preload="auto"
+        crossorigin="anonymous"
+      ></audio>
+    </a-assets>
 
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity id="target0" mindar-image-target="targetIndex: 0">
+      <a-entity id="smoothWrapper">
+        <a-plane
+          id="videoPlane"
+          src="#vinoVideo"
+          position="0 0 0"
+          width="1.25"
+          height="1.80"
+          material="shader: flat; transparent: true; opacity: 1"
+          visible="false"
+        ></a-plane>
+      </a-entity>
+    </a-entity>
   </a-scene>
 
   <script>
-    const ui = document.getElementById("ui");
-    const startBtn = document.getElementById("startBtn");
-    const status = document.getElementById("status");
-    const hint = document.getElementById("hint");
+    const startScreen = document.getElementById("startScreen");
+    const startButton = document.getElementById("startButton");
+    const debugBox = document.getElementById("debugBox");
+    const scanText = document.getElementById("scanText");
+    const sceneEl = document.getElementById("arScene");
+    const target0 = document.getElementById("target0");
+    const smoothWrapper = document.getElementById("smoothWrapper");
+    const videoPlane = document.getElementById("videoPlane");
+    const video = document.getElementById("vinoVideo");
+    const audio = document.getElementById("vinoAudio");
 
-    const videoLayer = document.getElementById("videoLayer");
-    const videoWrap = document.getElementById("videoWrap");
-    const vinoVideo = document.getElementById("vinoVideo");
-    const vinoAudio = document.getElementById("vinoAudio");
+    let targetVisible = false;
+    let smoothingInitialized = false;
+    let experienceStarted = false;
+    let videoFinished = false;
+    let audioUnlocked = false;
 
-    const scene = document.querySelector("a-scene");
-    const target = document.getElementById("target0");
+    const smoothed = {
+      position: new THREE.Vector3(),
+      quaternion: new THREE.Quaternion(),
+      scale: new THREE.Vector3(1, 1, 1)
+    };
 
-    let foundOnce = false;
-    let playing = false;
-
-    function setStatus(text) {
-      status.innerHTML = "<strong>AR</strong> " + text;
+    function setDebug(text) {
+      debugBox.textContent = "Stato: " + text;
+      console.log(text);
     }
 
-    function stopVideo() {
-      try {
-        vinoVideo.pause();
-        vinoVideo.currentTime = 0;
-      } catch (e) {}
+    function showHint(text = "Inquadra l'etichetta") {
+      scanText.textContent = text;
+      scanText.style.display = "none";
     }
 
-    function stopAudio() {
-      try {
-        vinoAudio.pause();
-        vinoAudio.currentTime = 0;
-      } catch (e) {}
+    function hideHint() {
+      scanText.style.display = "none";
     }
 
-    async function unlockMedia() {
+    function showVideoPlane() {
+      videoPlane.setAttribute("visible", true);
+      videoPlane.object3D.visible = true;
+    }
+
+    function hideVideoPlane() {
+      videoPlane.setAttribute("visible", false);
+      videoPlane.object3D.visible = false;
+    }
+
+    async function unlockAudioAndVideo() {
       try {
-        vinoVideo.muted = true;
-        await vinoVideo.play();
-        vinoVideo.pause();
-        vinoVideo.currentTime = 0;
+        video.muted = true;
+        video.currentTime = 0;
+        await video.play();
+        video.pause();
+        video.currentTime = 0;
       } catch (e) {
-        console.warn("Sblocco video non riuscito:", e);
+        console.warn("Video non sbloccato subito:", e);
       }
 
       try {
-        await vinoAudio.play();
-        vinoAudio.pause();
-        vinoAudio.currentTime = 0;
+        audio.volume = 1;
+        audio.currentTime = 0;
+        await audio.play();
+        audio.pause();
+        audio.currentTime = 0;
+        audioUnlocked = true;
+        setDebug("audio sbloccato");
       } catch (e) {
-        console.warn("Sblocco audio non riuscito:", e);
+        console.warn("Audio non sbloccato subito:", e);
+        audioUnlocked = false;
       }
     }
 
-    function showVideo() {
-      videoLayer.style.display = "flex";
-      requestAnimationFrame(() => {
-        videoWrap.classList.add("show");
+    async function playFromStart() {
+      if (experienceStarted) return;
+      experienceStarted = true;
+
+      try {
+        video.pause();
+        audio.pause();
+        video.currentTime = 0;
+        audio.currentTime = 0;
+
+        video.muted = true;
+        video.volume = 1;
+        audio.volume = 1;
+
+        const playVideo = video.play();
+        const playAudio = audio.play();
+
+        await Promise.allSettled([playVideo, playAudio]);
+
+        setDebug("video e audio avviati");
+      } catch (e) {
+        console.warn("Errore play:", e);
+        setDebug("tocca lo schermo per attivare audio");
+
+        document.body.addEventListener("click", async () => {
+          try {
+            audio.volume = 1;
+            await audio.play();
+            setDebug("audio attivato");
+          } catch (err) {
+            console.warn("Errore audio dopo click:", err);
+          }
+        }, { once: true });
+      }
+    }
+
+    function initializeSmoothing() {
+      const targetObj = target0.object3D;
+      const wrapperObj = smoothWrapper.object3D;
+
+      smoothed.position.copy(targetObj.position);
+      smoothed.quaternion.copy(targetObj.quaternion);
+      smoothed.scale.copy(targetObj.scale);
+
+      wrapperObj.position.copy(smoothed.position);
+      wrapperObj.quaternion.copy(smoothed.quaternion);
+      wrapperObj.scale.copy(smoothed.scale);
+
+      smoothingInitialized = true;
+    }
+
+    startButton.addEventListener("click", async () => {
+      startButton.disabled = true;
+      startButton.textContent = "Avvio...";
+
+      await unlockAudioAndVideo();
+
+      const startAR = async () => {
+        const mindarSystem = sceneEl.systems["mindar-image-system"];
+
+        if (!mindarSystem) {
+          setDebug("mindar-image-system non trovato");
+          startButton.disabled = false;
+          startButton.textContent = "Riprova";
+          return;
+        }
+
+        try {
+          await mindarSystem.start();
+          startScreen.style.display = "none";
+          hideVideoPlane();
+          setDebug("AR avviata. Ricerca etichetta...");
+        } catch (err) {
+          console.error(err);
+          setDebug("errore avvio AR");
+          startButton.disabled = false;
+          startButton.textContent = "Riprova";
+        }
+      };
+
+      if (sceneEl.hasLoaded) {
+        startAR();
+      } else {
+        sceneEl.addEventListener("loaded", startAR, { once: true });
+      }
+    });
+
+    sceneEl.addEventListener("arReady", () => {
+      setDebug("MindAR pronto");
+    });
+
+    sceneEl.addEventListener("arError", () => {
+      setDebug("errore MindAR");
+      startScreen.style.display = "flex";
+      startButton.disabled = false;
+      startButton.textContent = "Riprova";
+    });
+
+    target0.addEventListener("targetFound", async () => {
+      if (experienceStarted) return;
+
+      targetVisible = true;
+      hideHint();
+      initializeSmoothing();
+
+      if (videoFinished) {
+        videoFinished = false;
+      }
+
+      showVideoPlane();
+      setDebug("etichetta trovata");
+      await playFromStart();
+    });
+
+    target0.addEventListener("targetLost", () => {
+      targetVisible = false;
+      smoothingInitialized = false;
+
+      // Importante: dopo il primo riconoscimento NON fermiamo video/audio.
+      // Così non cerca o riavvia un altro target fino alla fine del video.
+      if (!experienceStarted) {
+        video.pause();
+        audio.pause();
+        video.currentTime = 0;
+        audio.currentTime = 0;
+        hideVideoPlane();
+      }
+    });
+
+    video.addEventListener("ended", async () => {
+      video.pause();
+      audio.pause();
+      video.currentTime = 0;
+      audio.currentTime = 0;
+      videoFinished = true;
+      targetVisible = false;
+      smoothingInitialized = false;
+      experienceStarted = false;
+      hideVideoPlane();
+      setDebug("video terminato");
+
+      try {
+        await sceneEl.systems["mindar-image-system"].stop();
+      } catch (e) {}
+    });
+
+    sceneEl.addEventListener("renderstart", () => {
+      const renderer = sceneEl.renderer;
+
+      renderer.setAnimationLoop(() => {
+        renderer.render(sceneEl.object3D, sceneEl.camera);
+
+        if (!targetVisible || !smoothingInitialized || experienceStarted) return;
+
+        const targetObj = target0.object3D;
+        const wrapperObj = smoothWrapper.object3D;
+
+        const positionLerp = 0.12;
+        const rotationLerp = 0.10;
+        const scaleLerp = 0.12;
+
+        smoothed.position.lerp(targetObj.position, positionLerp);
+        smoothed.quaternion.slerp(targetObj.quaternion, rotationLerp);
+        smoothed.scale.lerp(targetObj.scale, scaleLerp);
+
+        wrapperObj.position.copy(smoothed.position);
+        wrapperObj.quaternion.copy(smoothed.quaternion);
+        wrapperObj.scale.copy(smoothed.scale);
       });
-    }
-
-    function hideVideo() {
-      videoWrap.classList.remove("show");
-      setTimeout(() => {
-        videoLayer.style.display = "none";
-      }, 240);
-    }
-
-    async function playExperience() {
-      if (playing || foundOnce) return;
-
-      foundOnce = true;
-      playing = true;
-
-      setStatus("target trovato");
-      hint.textContent = "Video in riproduzione";
-
-      stopVideo();
-      stopAudio();
-      showVideo();
-
-      try {
-        vinoVideo.muted = true;
-        vinoVideo.currentTime = 0;
-        await vinoVideo.play();
-      } catch (e) {
-        console.error("Errore video:", e);
-        setStatus("errore video");
-      }
-
-      try {
-        vinoAudio.currentTime = 0;
-        await vinoAudio.play();
-      } catch (e) {
-        console.error("Errore audio:", e);
-        setStatus("video senza audio");
-      }
-    }
-
-    startBtn.addEventListener("click", async () => {
-      startBtn.disabled = true;
-      startBtn.textContent = "Avvio...";
-
-      try {
-        await unlockMedia();
-
-        const mindarSystem = scene.systems["mindar-image-system"];
-        await mindarSystem.start();
-
-        ui.style.display = "none";
-        hint.classList.remove("hidden");
-        hint.textContent = "Inquadra l'etichetta";
-        setStatus("inquadra l'etichetta");
-      } catch (e) {
-        console.error("Errore avvio AR:", e);
-        setStatus("errore avvio");
-        startBtn.disabled = false;
-        startBtn.textContent = "Riprova";
-      }
-    });
-
-    target.addEventListener("targetFound", async () => {
-      await playExperience();
-    });
-
-    target.addEventListener("targetLost", () => {
-      // Volutamente ignorato:
-      // dopo il primo riconoscimento il video e l'audio continuano fino alla fine.
-      // Non viene cercato un nuovo target finché il video non termina.
-    });
-
-    vinoVideo.addEventListener("ended", async () => {
-      stopAudio();
-      playing = false;
-      setStatus("esperienza terminata");
-      hint.textContent = "Video terminato";
-      hideVideo();
-
-      try {
-        await scene.systems["mindar-image-system"].stop();
-      } catch (e) {}
-    });
-
-    window.addEventListener("resize", () => {
-      const canvas = document.querySelector("canvas.a-canvas");
-      if (canvas) {
-        canvas.style.width = "100vw";
-        canvas.style.height = "100vh";
-      }
     });
   </script>
-
 </body>
 </html>
