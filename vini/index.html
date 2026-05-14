@@ -5,125 +5,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Esperienza AR Vino</title>
 
+  <!-- AFRAME + MINDAR -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    :root {
-      --verde-scuro: #163d2a;
-      --verde: #5f8f70;
-      --oro: #d8a94a;
-      --oro-chiaro: #f0d58a;
+    :root{
+      --verde-scuro:#163d2a;
+      --verde:#5f8f70;
+      --oro:#d8a94a;
+      --oro-chiaro:#f0d58a;
     }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background: #000;
-      font-family: Arial, sans-serif;
+    html,body{
+      margin:0;
+      padding:0;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      background:#000;
+      font-family:Arial,sans-serif;
     }
 
-    #startScreen {
-      position: fixed;
-      inset: 0;
+    #startScreen{
+      position:fixed;
+      inset:0;
       background:
         radial-gradient(circle at center, rgba(240,213,138,.28) 0%, rgba(240,213,138,0) 46%),
-        linear-gradient(180deg, var(--verde) 0%, var(--verde-scuro) 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      color: #fff;
-      text-align: center;
-      padding: 24px;
+        linear-gradient(180deg,var(--verde) 0%,var(--verde-scuro) 100%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:10000;
+      color:#fff;
+      text-align:center;
+      padding:24px;
     }
 
-    #startScreen h1 {
-      margin: 0 0 12px 0;
-      font-size: 28px;
-      letter-spacing: 0.5px;
-      color: var(--oro-chiaro);
+    #startScreen h1{
+      margin:0 0 14px 0;
+      font-size:28px;
+      color:var(--oro-chiaro);
     }
 
-    #startScreen p {
-      margin: 0 0 22px 0;
-      font-size: 15px;
-      max-width: 340px;
-      line-height: 1.5;
-      color: rgba(255,255,255,.92);
+    #startScreen p{
+      margin:0 0 24px 0;
+      max-width:340px;
+      line-height:1.5;
+      font-size:15px;
+      color:rgba(255,255,255,.92);
     }
 
-    #startButton {
-      background: linear-gradient(180deg, var(--oro-chiaro), var(--oro));
-      color: #17351f;
-      border: none;
-      border-radius: 999px;
-      padding: 14px 24px;
-      font-size: 16px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 0 24px rgba(216,169,74,0.35);
+    #startButton{
+      background:linear-gradient(180deg,var(--oro-chiaro),var(--oro));
+      color:#17351f;
+      border:none;
+      border-radius:999px;
+      padding:14px 24px;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 0 24px rgba(216,169,74,.35);
     }
 
-    #startButton:active {
-      transform: scale(.98);
+    #startButton:active{
+      transform:scale(.98);
     }
 
-    #debugBox,
-    #scanText {
-      display: none !important;
-    }
-
-    a-scene {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      overflow: hidden !important;
-      z-index: 10;
-      background: transparent !important;
+    a-scene{
+      position:fixed !important;
+      inset:0 !important;
+      width:100vw !important;
+      height:100vh !important;
+      overflow:hidden !important;
+      z-index:10;
+      background:transparent !important;
     }
 
     video,
     canvas,
-    .a-canvas {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      min-width: 100vw !important;
-      min-height: 100vh !important;
-      object-fit: cover !important;
-      background: transparent !important;
+    .a-canvas{
+      position:fixed !important;
+      inset:0 !important;
+      width:100vw !important;
+      height:100vh !important;
+      min-width:100vw !important;
+      min-height:100vh !important;
+      object-fit:cover !important;
+      background:transparent !important;
     }
 
-    video {
-      z-index: 1 !important;
-      transform: scale(1.01);
-      transform-origin: center center;
+    video{
+      z-index:1 !important;
+      transform:scale(1.01);
+      transform-origin:center center;
     }
 
     canvas,
-    .a-canvas {
-      z-index: 2 !important;
+    .a-canvas{
+      z-index:2 !important;
     }
   </style>
 </head>
 
 <body>
+
+  <!-- SCHERMATA INIZIALE -->
   <div id="startScreen">
     <h1>Esperienza AR Vino</h1>
-    <p>Premi il pulsante poi inquadra l'etichetta della bottiglia.</p>
-    <button id="startButton">Avvia esperienza</button>
+
+    <p>
+      Premi il pulsante poi inquadra
+      l'etichetta della bottiglia.
+    </p>
+
+    <button id="startButton">
+      Avvia esperienza
+    </button>
   </div>
 
-  <div id="debugBox">Stato: attesa avvio</div>
-  <div id="scanText">Inquadra l'etichetta</div>
-
+  <!-- SCENA AR -->
   <a-scene
     id="arScene"
     vr-mode-ui="enabled: false"
@@ -131,9 +133,20 @@
     loading-screen="enabled: false"
     renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
     color-space="sRGB"
-    mindar-image="imageTargetSrc: ./vini/targets.mind; uiLoading: no; uiScanning: no; uiError: no; autoStart: false;"
+    mindar-image="
+      imageTargetSrc: ./vini/targets.mind;
+      uiLoading: no;
+      uiScanning: no;
+      uiError: no;
+      autoStart: false;
+      maxTrack: 1;
+    "
   >
+
+    <!-- ASSETS -->
     <a-assets>
+
+      <!-- VIDEO -->
       <video
         id="vinoVideo"
         src="./assets/videos/vino.mp4"
@@ -144,274 +157,279 @@
         muted
       ></video>
 
+      <!-- AUDIO -->
       <audio
         id="vinoAudio"
         src="./assets/audio/vino.mp3"
         preload="auto"
         crossorigin="anonymous"
       ></audio>
+
     </a-assets>
 
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <!-- CAMERA -->
+    <a-camera
+      position="0 0 0"
+      look-controls="enabled: false"
+    ></a-camera>
 
-    <a-entity id="target0" mindar-image-target="targetIndex: 0">
-      <a-entity id="smoothWrapper">
-        <a-plane
-          id="videoPlane"
-          src="#vinoVideo"
-          position="0 0 0"
-          width="1.25"
-          height="1.80"
-          material="shader: flat; transparent: true; opacity: 1"
-          visible="false"
-        ></a-plane>
-      </a-entity>
+    <!-- TARGET 0 -->
+    <a-entity
+      id="target0"
+      mindar-image-target="targetIndex: 0"
+    >
+      <a-plane
+        id="videoPlane0"
+        src="#vinoVideo"
+        position="0 0 0"
+        width="1.20"
+        height="1.75"
+        material="shader: flat; transparent: true; opacity: 1"
+        visible="false"
+      ></a-plane>
     </a-entity>
+
+    <!-- TARGET 1 -->
+    <a-entity
+      id="target1"
+      mindar-image-target="targetIndex: 1"
+    >
+      <a-plane
+        id="videoPlane1"
+        src="#vinoVideo"
+        position="0 0 0"
+        width="1.20"
+        height="1.75"
+        material="shader: flat; transparent: true; opacity: 1"
+        visible="false"
+      ></a-plane>
+    </a-entity>
+
+    <!-- TARGET 2 -->
+    <a-entity
+      id="target2"
+      mindar-image-target="targetIndex: 2"
+    >
+      <a-plane
+        id="videoPlane2"
+        src="#vinoVideo"
+        position="0 0 0"
+        width="1.20"
+        height="1.75"
+        material="shader: flat; transparent: true; opacity: 1"
+        visible="false"
+      ></a-plane>
+    </a-entity>
+
+    <!-- TARGET 3 -->
+    <a-entity
+      id="target3"
+      mindar-image-target="targetIndex: 3"
+    >
+      <a-plane
+        id="videoPlane3"
+        src="#vinoVideo"
+        position="0 0 0"
+        width="1.20"
+        height="1.75"
+        material="shader: flat; transparent: true; opacity: 1"
+        visible="false"
+      ></a-plane>
+    </a-entity>
+
   </a-scene>
 
   <script>
     const startScreen = document.getElementById("startScreen");
     const startButton = document.getElementById("startButton");
-    const debugBox = document.getElementById("debugBox");
-    const scanText = document.getElementById("scanText");
+
     const sceneEl = document.getElementById("arScene");
-    const target0 = document.getElementById("target0");
-    const smoothWrapper = document.getElementById("smoothWrapper");
-    const videoPlane = document.getElementById("videoPlane");
+
     const video = document.getElementById("vinoVideo");
     const audio = document.getElementById("vinoAudio");
 
-    let targetVisible = false;
-    let smoothingInitialized = false;
+    const targets = [
+      document.getElementById("target0"),
+      document.getElementById("target1"),
+      document.getElementById("target2"),
+      document.getElementById("target3")
+    ];
+
+    const planes = [
+      document.getElementById("videoPlane0"),
+      document.getElementById("videoPlane1"),
+      document.getElementById("videoPlane2"),
+      document.getElementById("videoPlane3")
+    ];
+
     let experienceStarted = false;
-    let videoFinished = false;
-    let audioUnlocked = false;
 
-    const smoothed = {
-      position: new THREE.Vector3(),
-      quaternion: new THREE.Quaternion(),
-      scale: new THREE.Vector3(1, 1, 1)
-    };
-
-    function setDebug(text) {
-      debugBox.textContent = "Stato: " + text;
-      console.log(text);
+    function showPlanes() {
+      planes.forEach((plane) => {
+        plane.setAttribute("visible", true);
+        plane.object3D.visible = true;
+      });
     }
 
-    function showHint(text = "Inquadra l'etichetta") {
-      scanText.textContent = text;
-      scanText.style.display = "none";
+    function hidePlanes() {
+      planes.forEach((plane) => {
+        plane.setAttribute("visible", false);
+        plane.object3D.visible = false;
+      });
     }
 
-    function hideHint() {
-      scanText.style.display = "none";
-    }
+    async function unlockMedia() {
 
-    function showVideoPlane() {
-      videoPlane.setAttribute("visible", true);
-      videoPlane.object3D.visible = true;
-    }
-
-    function hideVideoPlane() {
-      videoPlane.setAttribute("visible", false);
-      videoPlane.object3D.visible = false;
-    }
-
-    async function unlockAudioAndVideo() {
       try {
         video.muted = true;
         video.currentTime = 0;
+
         await video.play();
+
         video.pause();
         video.currentTime = 0;
-      } catch (e) {
-        console.warn("Video non sbloccato subito:", e);
+
+      } catch(e) {
+        console.warn(e);
       }
 
       try {
-        audio.volume = 1;
+
         audio.currentTime = 0;
+
         await audio.play();
+
         audio.pause();
         audio.currentTime = 0;
-        audioUnlocked = true;
-        setDebug("audio sbloccato");
-      } catch (e) {
-        console.warn("Audio non sbloccato subito:", e);
-        audioUnlocked = false;
+
+      } catch(e) {
+        console.warn(e);
       }
     }
 
-    async function playFromStart() {
+    async function playExperience() {
+
       if (experienceStarted) return;
+
       experienceStarted = true;
 
       try {
+
         video.pause();
         audio.pause();
+
         video.currentTime = 0;
         audio.currentTime = 0;
 
-        video.muted = true;
-        video.volume = 1;
-        audio.volume = 1;
+        showPlanes();
 
         const playVideo = video.play();
         const playAudio = audio.play();
 
-        await Promise.allSettled([playVideo, playAudio]);
+        await Promise.allSettled([
+          playVideo,
+          playAudio
+        ]);
 
-        setDebug("video e audio avviati");
-      } catch (e) {
-        console.warn("Errore play:", e);
-        setDebug("tocca lo schermo per attivare audio");
+      } catch(e) {
 
-        document.body.addEventListener("click", async () => {
-          try {
-            audio.volume = 1;
-            await audio.play();
-            setDebug("audio attivato");
-          } catch (err) {
-            console.warn("Errore audio dopo click:", err);
-          }
-        }, { once: true });
+        console.error(e);
+
       }
     }
 
-    function initializeSmoothing() {
-      const targetObj = target0.object3D;
-      const wrapperObj = smoothWrapper.object3D;
-
-      smoothed.position.copy(targetObj.position);
-      smoothed.quaternion.copy(targetObj.quaternion);
-      smoothed.scale.copy(targetObj.scale);
-
-      wrapperObj.position.copy(smoothed.position);
-      wrapperObj.quaternion.copy(smoothed.quaternion);
-      wrapperObj.scale.copy(smoothed.scale);
-
-      smoothingInitialized = true;
-    }
-
     startButton.addEventListener("click", async () => {
+
       startButton.disabled = true;
       startButton.textContent = "Avvio...";
 
-      await unlockAudioAndVideo();
+      await unlockMedia();
 
       const startAR = async () => {
-        const mindarSystem = sceneEl.systems["mindar-image-system"];
+
+        const mindarSystem =
+          sceneEl.systems["mindar-image-system"];
 
         if (!mindarSystem) {
-          setDebug("mindar-image-system non trovato");
+
           startButton.disabled = false;
           startButton.textContent = "Riprova";
+
           return;
         }
 
         try {
+
           await mindarSystem.start();
+
           startScreen.style.display = "none";
-          hideVideoPlane();
-          setDebug("AR avviata. Ricerca etichetta...");
-        } catch (err) {
+
+          hidePlanes();
+
+        } catch(err) {
+
           console.error(err);
-          setDebug("errore avvio AR");
+
           startButton.disabled = false;
           startButton.textContent = "Riprova";
         }
       };
 
       if (sceneEl.hasLoaded) {
+
         startAR();
+
       } else {
-        sceneEl.addEventListener("loaded", startAR, { once: true });
+
+        sceneEl.addEventListener(
+          "loaded",
+          startAR,
+          { once:true }
+        );
       }
     });
 
-    sceneEl.addEventListener("arReady", () => {
-      setDebug("MindAR pronto");
+    // TUTTI I TARGET FANNO PARTIRE
+    // LO STESSO VIDEO + AUDIO
+    targets.forEach((target) => {
+
+      target.addEventListener(
+        "targetFound",
+        async () => {
+
+          await playExperience();
+
+        }
+      );
+
     });
 
-    sceneEl.addEventListener("arError", () => {
-      setDebug("errore MindAR");
-      startScreen.style.display = "flex";
-      startButton.disabled = false;
-      startButton.textContent = "Riprova";
-    });
-
-    target0.addEventListener("targetFound", async () => {
-      if (experienceStarted) return;
-
-      targetVisible = true;
-      hideHint();
-      initializeSmoothing();
-
-      if (videoFinished) {
-        videoFinished = false;
-      }
-
-      showVideoPlane();
-      setDebug("etichetta trovata");
-      await playFromStart();
-    });
-
-    target0.addEventListener("targetLost", () => {
-      targetVisible = false;
-      smoothingInitialized = false;
-
-      // Importante: dopo il primo riconoscimento NON fermiamo video/audio.
-      // Così non cerca o riavvia un altro target fino alla fine del video.
-      if (!experienceStarted) {
-        video.pause();
-        audio.pause();
-        video.currentTime = 0;
-        audio.currentTime = 0;
-        hideVideoPlane();
-      }
-    });
+    // NON FERMARE SE PERDE IL TARGET
+    // così continua fino alla fine
 
     video.addEventListener("ended", async () => {
+
       video.pause();
       audio.pause();
+
       video.currentTime = 0;
       audio.currentTime = 0;
-      videoFinished = true;
-      targetVisible = false;
-      smoothingInitialized = false;
+
+      hidePlanes();
+
       experienceStarted = false;
-      hideVideoPlane();
-      setDebug("video terminato");
 
       try {
-        await sceneEl.systems["mindar-image-system"].stop();
-      } catch (e) {}
+
+        await sceneEl
+          .systems["mindar-image-system"]
+          .stop();
+
+      } catch(e) {}
+
     });
 
-    sceneEl.addEventListener("renderstart", () => {
-      const renderer = sceneEl.renderer;
-
-      renderer.setAnimationLoop(() => {
-        renderer.render(sceneEl.object3D, sceneEl.camera);
-
-        if (!targetVisible || !smoothingInitialized || experienceStarted) return;
-
-        const targetObj = target0.object3D;
-        const wrapperObj = smoothWrapper.object3D;
-
-        const positionLerp = 0.12;
-        const rotationLerp = 0.10;
-        const scaleLerp = 0.12;
-
-        smoothed.position.lerp(targetObj.position, positionLerp);
-        smoothed.quaternion.slerp(targetObj.quaternion, rotationLerp);
-        smoothed.scale.lerp(targetObj.scale, scaleLerp);
-
-        wrapperObj.position.copy(smoothed.position);
-        wrapperObj.quaternion.copy(smoothed.quaternion);
-        wrapperObj.scale.copy(smoothed.scale);
-      });
-    });
   </script>
+
 </body>
 </html>
