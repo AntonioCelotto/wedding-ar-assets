@@ -1,73 +1,84 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Esperienza AR Vino</title>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
 
+  <title>AR Vino</title>
+
+  <!-- AFRAME -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <!-- MINDAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: black;
+      background: transparent;
       font-family: Arial, sans-serif;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
     }
 
     #startScreen {
       position: fixed;
       inset: 0;
       z-index: 99999;
-      background: linear-gradient(180deg, #5f8f70, #163d2a);
-      color: white;
+
+      background:
+        radial-gradient(circle at center,
+        rgba(240,213,138,.25) 0%,
+        rgba(240,213,138,0) 45%),
+        linear-gradient(180deg,#5f8f70 0%,#163d2a 100%);
+
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column;
+
+      color: white;
       text-align: center;
       padding: 24px;
     }
 
     #startScreen h1 {
+      margin: 0 0 14px 0;
       color: #f0d58a;
-      margin-bottom: 12px;
-      font-size: 28px;
+      font-size: 30px;
     }
 
     #startScreen p {
-      max-width: 340px;
+      margin: 0 0 24px 0;
+      max-width: 320px;
       line-height: 1.5;
-      margin-bottom: 24px;
     }
 
     #startButton {
       border: none;
       border-radius: 999px;
-      background: linear-gradient(180deg, #f0d58a, #d8a94a);
-      color: #17351f;
       padding: 15px 28px;
+
+      background:
+        linear-gradient(180deg,#f0d58a,#d8a94a);
+
+      color: #17351f;
+
       font-size: 17px;
       font-weight: bold;
-      cursor: pointer;
-    }
 
-    #debug {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      right: 10px;
-      z-index: 999999;
-      background: rgba(0,0,0,0.65);
-      color: white;
-      font-size: 12px;
-      padding: 8px;
-      border-radius: 8px;
-      display: none;
+      cursor: pointer;
     }
 
     a-scene {
@@ -75,40 +86,88 @@
       inset: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
+      background: transparent !important;
+    }
+
+    video,
+    canvas,
+    .a-canvas {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: cover !important;
+    }
+
+    #debug {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+
+      z-index: 999999;
+
+      background: rgba(0,0,0,.6);
+      color: white;
+
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 8px;
+
+      display: none;
     }
   </style>
 </head>
 
 <body>
 
+  <!-- START -->
   <div id="startScreen">
+
     <h1>Esperienza AR Vino</h1>
-    <p>Premi il pulsante, consenti la fotocamera e inquadra l'etichetta.</p>
-    <button id="startButton">Avvia realtà aumentata</button>
+
+    <p>
+      Premi il pulsante e inquadra
+      l'etichetta della bottiglia.
+    </p>
+
+    <button id="startButton">
+      Avvia Realtà Aumentata
+    </button>
+
   </div>
 
+  <!-- DEBUG -->
   <div id="debug"></div>
 
+  <!-- SCENA -->
   <a-scene
     id="scene"
     embedded
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
     loading-screen="enabled: false"
-    renderer="alpha: true; antialias: true; colorManagement: true"
+    renderer="
+      alpha: true;
+      antialias: true;
+      colorManagement: true;
+      physicallyCorrectLights: true;
+    "
+
     mindar-image="
       imageTargetSrc: ./targets.mind;
       autoStart: false;
       maxTrack: 1;
-      filterMinCF: 0.0001;
-      filterBeta: 0.001;
       uiLoading: yes;
       uiScanning: yes;
       uiError: yes;
     "
   >
 
+    <!-- ASSETS -->
     <a-assets timeout="30000">
+
+      <!-- VIDEO -->
       <video
         id="vinoVideo"
         src="./assets/videos/vino.mp4"
@@ -119,130 +178,264 @@
         muted
       ></video>
 
+      <!-- AUDIO -->
       <audio
         id="vinoAudio"
         src="./assets/audio/vino.mp3"
         preload="auto"
         crossorigin="anonymous"
       ></audio>
+
     </a-assets>
 
+    <!-- CAMERA -->
     <a-camera
       position="0 0 0"
       look-controls="enabled: false"
-      cursor="rayOrigin: mouse"
     ></a-camera>
 
-    <a-entity id="target" mindar-image-target="targetIndex: 0">
+    <!-- TARGET -->
+    <a-entity
+      id="target"
+      mindar-image-target="targetIndex: 0"
+    >
 
-      <a-video
+      <!-- VIDEO AR -->
+      <a-plane
         id="arVideo"
-        src="#vinoVideo"
         position="0 0 0"
         rotation="0 0 0"
         width="1.2"
         height="1.75"
         visible="false"
-      ></a-video>
+
+        material="
+          shader: chromakey;
+          src: #vinoVideo;
+          transparent: true;
+        "
+      ></a-plane>
 
     </a-entity>
 
   </a-scene>
 
+  <!-- CHROMA KEY -->
   <script>
-    const startScreen = document.getElementById("startScreen");
-    const startButton = document.getElementById("startButton");
-    const debug = document.getElementById("debug");
 
-    const scene = document.getElementById("scene");
-    const target = document.getElementById("target");
-    const arVideo = document.getElementById("arVideo");
+    AFRAME.registerShader("chromakey", {
 
-    const video = document.getElementById("vinoVideo");
-    const audio = document.getElementById("vinoAudio");
+      schema: {
+
+        src: { type: "map" },
+
+        color: {
+          type: "vec3",
+          is: "uniform",
+          default: { x:0.0, y:0.0, z:0.0 }
+        },
+
+        threshold: {
+          type: "number",
+          is: "uniform",
+          default: 0.30
+        },
+
+        smoothness: {
+          type: "number",
+          is: "uniform",
+          default: 0.12
+        }
+
+      },
+
+      vertexShader: `
+        varying vec2 vUv;
+
+        void main() {
+
+          vUv = uv;
+
+          gl_Position =
+            projectionMatrix *
+            modelViewMatrix *
+            vec4(position, 1.0);
+
+        }
+      `,
+
+      fragmentShader: `
+
+        uniform sampler2D src;
+        uniform vec3 color;
+
+        uniform float threshold;
+        uniform float smoothness;
+
+        varying vec2 vUv;
+
+        void main() {
+
+          vec4 tex = texture2D(src, vUv);
+
+          float diff =
+            distance(tex.rgb, color);
+
+          float alpha =
+            smoothstep(
+              threshold,
+              threshold + smoothness,
+              diff
+            );
+
+          gl_FragColor =
+            vec4(tex.rgb, alpha);
+
+        }
+      `
+    });
+
+  </script>
+
+  <!-- APP -->
+  <script>
+
+    const startScreen =
+      document.getElementById("startScreen");
+
+    const startButton =
+      document.getElementById("startButton");
+
+    const debug =
+      document.getElementById("debug");
+
+    const scene =
+      document.getElementById("scene");
+
+    const target =
+      document.getElementById("target");
+
+    const arVideo =
+      document.getElementById("arVideo");
+
+    const video =
+      document.getElementById("vinoVideo");
+
+    const audio =
+      document.getElementById("vinoAudio");
 
     let arStarted = false;
     let videoStarted = false;
 
     function log(text) {
+
       debug.style.display = "block";
+
       debug.innerHTML = text;
+
       console.log(text);
     }
 
-    function showARVideo() {
-      arVideo.setAttribute("visible", "true");
+    function showVideo() {
+
+      arVideo.setAttribute(
+        "visible",
+        true
+      );
+
       arVideo.object3D.visible = true;
     }
 
-    function hideARVideo() {
-      arVideo.setAttribute("visible", "false");
+    function hideVideo() {
+
+      arVideo.setAttribute(
+        "visible",
+        false
+      );
+
       arVideo.object3D.visible = false;
     }
 
     async function unlockMedia() {
+
       try {
+
         video.muted = true;
-        video.currentTime = 0;
+
         await video.play();
+
         video.pause();
+
         video.currentTime = 0;
-        log("Video sbloccato");
-      } catch (e) {
-        log("Video non sbloccato, continuo comunque");
+
+      } catch(e) {
+
         console.warn(e);
       }
 
       try {
-        audio.currentTime = 0;
+
         await audio.play();
+
         audio.pause();
+
         audio.currentTime = 0;
-        log("Audio sbloccato");
-      } catch (e) {
-        log("Audio non sbloccato, continuo comunque");
+
+      } catch(e) {
+
         console.warn(e);
       }
     }
 
     async function startAR() {
+
       if (arStarted) return;
 
       try {
-        const mindarSystem = scene.systems["mindar-image-system"];
+
+        const mindarSystem =
+          scene.systems["mindar-image-system"];
 
         if (!mindarSystem) {
-          log("Errore: MindAR non caricato");
-          startButton.disabled = false;
-          startButton.textContent = "Riprova";
+
+          log("MindAR non trovato");
+
           return;
         }
 
         log("Avvio fotocamera...");
+
         await mindarSystem.start();
 
         arStarted = true;
+
         startScreen.style.display = "none";
 
-        hideARVideo();
-        log("AR attiva. Inquadra l'etichetta.");
+        hideVideo();
 
-      } catch (e) {
-        log("Errore avvio AR: controlla permessi camera, HTTPS e targets.mind");
+        log("AR attiva");
+
+      } catch(e) {
+
+        log("Errore avvio AR");
+
         console.error(e);
 
         startButton.disabled = false;
+
         startButton.textContent = "Riprova";
       }
     }
 
     async function playExperience() {
+
       if (videoStarted) return;
 
       videoStarted = true;
 
       try {
-        log("Target riconosciuto. Avvio video...");
+
+        log("Target trovato");
 
         video.pause();
         audio.pause();
@@ -250,65 +443,77 @@
         video.currentTime = 0;
         audio.currentTime = 0;
 
-        video.muted = true;
-
-        showARVideo();
+        showVideo();
 
         await video.play();
 
         try {
+
           await audio.play();
-        } catch (e) {
-          console.warn("Audio bloccato:", e);
+
+        } catch(e) {
+
+          console.warn(e);
         }
 
-        log("Video AR in riproduzione");
+      } catch(e) {
 
-      } catch (e) {
-        log("Errore riproduzione video");
         console.error(e);
+
         videoStarted = false;
       }
     }
 
-    startButton.addEventListener("click", async () => {
-      startButton.disabled = true;
-      startButton.textContent = "Avvio...";
+    startButton.addEventListener(
+      "click",
+      async () => {
 
-      log("Preparazione media...");
-      await unlockMedia();
+        startButton.disabled = true;
 
-      if (scene.hasLoaded) {
-        startAR();
-      } else {
-        scene.addEventListener("loaded", startAR, { once: true });
+        startButton.textContent =
+          "Avvio...";
+
+        await unlockMedia();
+
+        if (scene.hasLoaded) {
+
+          startAR();
+
+        } else {
+
+          scene.addEventListener(
+            "loaded",
+            startAR,
+            { once:true }
+          );
+        }
       }
-    });
+    );
 
-    target.addEventListener("targetFound", () => {
-      playExperience();
-    });
+    target.addEventListener(
+      "targetFound",
+      () => {
 
-    target.addEventListener("targetLost", () => {
-      log("Target perso. Il video continua.");
-    });
+        playExperience();
+      }
+    );
 
-    video.addEventListener("ended", () => {
-      log("Video terminato. Inquadra di nuovo per ripartire.");
+    video.addEventListener(
+      "ended",
+      () => {
 
-      video.pause();
-      audio.pause();
+        video.pause();
+        audio.pause();
 
-      video.currentTime = 0;
-      audio.currentTime = 0;
+        video.currentTime = 0;
+        audio.currentTime = 0;
 
-      hideARVideo();
-      videoStarted = false;
-    });
+        hideVideo();
 
-    window.addEventListener("error", function(e) {
-      log("Errore pagina: " + e.message);
-    });
+        videoStarted = false;
+      }
+    );
+
   </script>
 
 </body>
